@@ -112,6 +112,8 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 .klabel{font-size:11px;font-family:system-ui;color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:1px 6px}
 .scroll{max-height:42vh;overflow-y:auto;touch-action:pan-y}
 @media (max-height:480px){.screen{gap:8px}.up{padding:3px 10px}.up .btn{padding:5px 10px}h2{font-size:clamp(20px,6vh,30px)}.pl span{font-size:20px}.sw{width:30px;height:30px}.pl{min-width:56px}}
+#exitBtn{background:rgba(229,57,53,.8);border-color:#fff}
+#updBtn{position:fixed;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:40;font-family:inherit;font-size:clamp(14px,3.6vh,20px);color:#10203a;background:#ffd23f;border:3px solid #fff;border-radius:14px;padding:8px 18px;box-shadow:0 0 18px #ffb300;animation:glow .7s ease-in-out infinite alternate}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0b1e;font-size:24px;z-index:60}
 </style>
 </head>
@@ -121,7 +123,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 
 <!-- HUD -->
 <div id="hud">
-  <div id="hudTL" class="safe"><div id="pos">1<small>º/6</small></div><div id="lap">VOLTA 1/3</div><div id="spd">0 km/h</div></div>
+  <div id="hudTL" class="safe"><div id="pos">1<small>º/6</small></div><div id="lap">VOLTA 1/3</div><div id="spd">0 km/h</div><div id="hudRoom" style="display:none;font-size:clamp(13px,3vh,18px);color:#3dff9a"></div></div>
   <div id="hudTR" class="safe">
     <div class="hbtns"><button class="icon-btn" id="hudEmo" style="display:none">😀</button><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">⏸</button><button class="icon-btn" id="exitBtn">✕</button><button class="icon-btn" id="fsHud">⛶</button></div>
     <div id="emoBar"></div>
@@ -161,16 +163,23 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div class="screen" id="select">
   <h2>ESCOLHA A PISTA</h2>
   <div class="tracks" id="tracks"></div>
-  <div class="row" style="align-items:center"><span class="sub">VOLTAS:</span><button class="btn s b lapMinus">−</button><span class="coins lapVal">3</span><button class="btn s b lapPlus">+</button><button class="btn g" id="selBack">VOLTAR</button></div>
+  <div class="row" style="align-items:center"><span class="sub">CORREDORES:</span><button class="btn s b racerMinus">−</button><span class="coins racerVal">6</span><button class="btn s b racerPlus">+</button>
+    <span class="sub">VOLTAS:</span><button class="btn s b lapMinus">−</button><span class="coins lapVal">3</span><button class="btn s b lapPlus">+</button><button class="btn g" id="selBack">VOLTAR</button></div>
+</div>
+
+<!-- Escolher piloto -->
+<div class="screen" id="avatar">
+  <h2>ESCOLHA SEU PILOTO</h2>
+  <div class="row" style="align-items:center"><canvas id="pilotPrev" width="260" height="190" style="width:170px;height:124px"></canvas><div class="swatches" id="pilots" style="max-width:600px"></div></div>
+  <div class="sub">🎨 Cor do kart</div>
+  <div class="swatches" id="swatches"></div>
+  <div class="row"><button class="btn g" id="avBack">VOLTAR</button><button class="btn" id="avOk">CONTINUAR ▶</button></div>
 </div>
 
 <!-- Garagem -->
 <div class="screen" id="garage">
   <h2>🔧 GARAGEM</h2>
   <div class="coins">🪙 <span class="cn">0</span></div>
-  <div class="row" style="align-items:center"><canvas id="pilotPrev" width="220" height="150" style="width:150px;height:102px"></canvas><div><div class="sub">🧑 Piloto</div><div class="swatches" id="pilots" style="max-width:520px"></div></div></div>
-  <div class="sub">🎨 Cor do kart</div>
-  <div class="swatches" id="swatches"></div>
   <div class="ups" id="ups"></div>
   <div class="row"><button class="btn g" id="garBack">VOLTAR</button></div>
 </div>
@@ -227,7 +236,8 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <!-- Online -->
 <div class="screen" id="online">
   <h2>🌐 CORRER ONLINE</h2>
-  <div class="row"><button class="btn y" id="createRoom">➕ CRIAR SALA</button></div>
+  <div class="row" style="align-items:center"><span class="sub">CORREDORES NA PISTA:</span><button class="btn s b racerMinus">−</button><span class="coins racerVal">6</span><button class="btn s b racerPlus">+</button><button class="btn y" id="createRoom">➕ CRIAR SALA</button></div>
+  <div class="sub" style="font-size:12px">Se faltar gente, bots completam as vagas.</div>
   <div class="sub">ou entre na sala de um amigo:</div>
   <div class="row"><input class="inp" id="codeIn" inputmode="numeric" maxlength="8" placeholder="código de 8 números"><button class="btn" id="joinRoom">ENTRAR</button></div>
   <div class="sub" id="onMsg" style="color:#ffd23f"></div>
@@ -239,9 +249,10 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <div class="sub">CÓDIGO DA SALA · <span id="roomCount">1/8</span> pilotos</div>
   <div class="row" style="align-items:center"><div class="code" id="roomCode"></div><button class="btn s b" id="copyCode">📋 Copiar</button></div>
   <div class="res scroll" id="roomList"></div>
-  <div class="row" style="align-items:center" id="roomLapsRow"><span class="sub">VOLTAS:</span><button class="btn s b lapMinus hostOnly">−</button><span class="coins lapVal" id="roomLaps">3</span><button class="btn s b lapPlus hostOnly">+</button></div>
+  <div class="row" style="align-items:center" id="roomLapsRow"><span class="sub">CORREDORES:</span><button class="btn s b racerMinus hostOnly">−</button><span class="coins racerVal">6</span><button class="btn s b racerPlus hostOnly">+</button><span class="sub">VOLTAS:</span><button class="btn s b lapMinus hostOnly">−</button><span class="coins lapVal" id="roomLaps">3</span><button class="btn s b lapPlus hostOnly">+</button></div>
   <div class="row" id="emoRow"></div>
   <div class="sub" id="roomStatus"></div>
+  <div class="row" id="waitAsk" style="display:none;align-items:center"><span class="sub" style="color:#ffd23f">Aguardar mais participantes?</span><button class="btn s y" id="waitMore">⏳ +1 MINUTO</button><button class="btn s" id="waitGo">▶ COMEÇAR AGORA</button></div>
   <div class="row"><button class="btn s b" id="voiceBtn"></button><button class="btn s b" id="micBtn"></button></div>
   <div class="row"><button class="btn" id="startVote">▶ COMEÇAR</button><button class="btn g" id="leaveRoom">SAIR DA SALA</button></div>
 </div>
@@ -255,6 +266,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 </div>
 <div id="audios" style="display:none"></div>
 
+<button id="updBtn" style="display:none">🆕 NOVA ATUALIZAÇÃO! Toque para atualizar</button>
 <div id="rotate"><div class="phone"></div><div>Gire o celular<br>para a horizontal</div></div>
 <div id="loading">Carregando...</div>
 
@@ -271,7 +283,7 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ============ SALVAMENTO ============
 const SAVE_KEY = 'lorenzoKart_v1';
-let save = { coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [], color: 0, music: 1, sfx: true, pilot: 'menino', laps: 3 };
+let save = { coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [], color: 0, music: 1, sfx: true, pilot: 'menino', laps: 3, racers: 6 };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object.assign(save, s); } catch (e) {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
 
@@ -444,9 +456,10 @@ const DEMO = location.hash === '#demo';
 const SC = 1.15, ROAD_W = 20;
 let LAPS = 3;
 const KART_COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00, 0xff4fa3, 0x00bcd4, 0xf5f5f5, 0x333333];
-const NAMES = ['Você', 'Rex', 'Luna', 'Faísca', 'Zé', 'Bia'];
-const COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00];
-const PRIZE = [150, 100, 70, 50, 30, 20];
+const NAMES = ['Você', 'Rex', 'Luna', 'Faísca', 'Zé', 'Bia', 'Dudu', 'Nina'];
+const BOT_NAMES = ['Rex', 'Luna', 'Faísca', 'Zé', 'Bia', 'Dudu', 'Nina', 'Tito'];
+const COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00, 0xff4fa3, 0x00bcd4];
+const PRIZE = [150, 100, 70, 50, 35, 25, 15, 10];
 const ICON = { turbo: '⚡', banana: '🍌', missil: '🚀', raio: '🌩️', escudo: '🛡️', granada: '💣' };
 const ITEM_NAME = { turbo: 'TURBO!', banana: 'BANANA!', missil: 'MÍSSIL!', raio: 'RAIO!', escudo: 'ESCUDO!', granada: 'GRANADA!' };
 const EMOS = ['😂', '👍', '😱', '😎', '🔥', '😭'];
@@ -710,29 +723,40 @@ function buildMinimap(minX, maxX, minZ, maxZ) {
 // ============ KARTS ============
 // ============ PILOTOS FOFINHOS ============
 const PILOTS = [
-  { id: 'menino', name: 'Menino', emoji: '👦' }, { id: 'menina', name: 'Menina', emoji: '👧' }, { id: 'robo', name: 'Robô', emoji: '🤖' },
-  { id: 'cachorro', name: 'Cachorro', emoji: '🐶' }, { id: 'gato', name: 'Gato', emoji: '🐱' }, { id: 'panda', name: 'Panda', emoji: '🐼' },
-  { id: 'coelho', name: 'Coelho', emoji: '🐰' }, { id: 'tigre', name: 'Tigre', emoji: '🐯' },
+  { id: 'menino', name: 'Menino cabelo preto', emoji: '👦🏻' }, { id: 'menino_loiro', name: 'Menino loiro', emoji: '👱‍♂️' },
+  { id: 'menina', name: 'Menina cabelo preto', emoji: '👧🏻' }, { id: 'menina_loira', name: 'Menina loira', emoji: '👱‍♀️' },
+  { id: 'gato', name: 'Gato', emoji: '🐱' }, { id: 'cachorro', name: 'Cachorro', emoji: '🐶' }, { id: 'tigre', name: 'Tigre', emoji: '🐯' }, { id: 'leao', name: 'Leãozinho', emoji: '🦁' },
+  { id: 'robo', name: 'Robô cinza', emoji: '🤖' }, { id: 'robo_rosa', name: 'Robô rosa', emoji: '🎀' },
+  { id: 'panda', name: 'Panda', emoji: '🐼' }, { id: 'coelho', name: 'Coelho', emoji: '🐰' },
 ];
 function buildPilot(pid, color) {
   const g = new THREE.Group();
   const L = c => new THREE.MeshLambertMaterial({ color: c }), B = c => new THREE.MeshBasicMaterial({ color: c });
   const add = (geo, mat, x, y, z, sx, sy, sz) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (sx) m.scale.set(sx, sy, sz); g.add(m); return m; };
   const S = (r, w, h) => new THREE.SphereGeometry(r, w || 14, h || 12);
-  const P = { menino: [0xf1c27d, 0xf1c27d], menina: [0xf1c27d, 0xf1c27d], robo: [0xb0bec5, 0x90a4ae], cachorro: [0xd9a066, 0xf3d9b1],
+  const hair = pid.endsWith('loiro') || pid.endsWith('loira') ? 0xf2c94c : 0x1e1b1a;
+  const robo = pid.startsWith('robo'), rosa = pid === 'robo_rosa';
+  if (pid.startsWith('menino')) pid = 'menino'; else if (pid.startsWith('menina')) pid = 'menina';
+  const P = { menino: [0xf1c27d, 0xf1c27d], menina: [0xf1c27d, 0xf1c27d], robo: rosa ? [0xf8a5c8, 0xf48fb1] : [0xb0bec5, 0x90a4ae], robo_rosa: [0xf8a5c8, 0xf48fb1], leao: [0xffc04d, 0xfff3d6], cachorro: [0xd9a066, 0xf3d9b1],
     gato: [0xf4a259, 0xffe8cc], panda: [0xffffff, 0xffffff], coelho: [0xf5f5f5, 0xffffff], tigre: [0xff9f1c, 0xffffff] }[pid] || [0xf1c27d, 0xf1c27d];
   const headY = 1.25, hz = 0;
   // corpo
-  add(new THREE.CylinderGeometry(.45, .58, 1.0, 12), L(pid === 'panda' ? 0x222222 : pid === 'robo' ? 0x78909c : color), 0, .5, 0);
+  add(new THREE.CylinderGeometry(.45, .58, 1.0, 12), L(pid === 'panda' ? 0x222222 : robo ? (rosa ? 0xec407a : 0x78909c) : color), 0, .5, 0);
   // braços no volante
-  [-1, 1].forEach(s => { const a = add(new THREE.CylinderGeometry(.13, .13, .8, 8), L(pid === 'robo' ? 0x78909c : P[0]), s * .42, .65, .45); a.rotation.x = 1.2; a.rotation.z = -s * .3; });
+  [-1, 1].forEach(s => { const a = add(new THREE.CylinderGeometry(.13, .13, .8, 8), L(robo ? (rosa ? 0xec407a : 0x78909c) : P[0]), s * .42, .65, .45); a.rotation.x = 1.2; a.rotation.z = -s * .3; });
   // cabeça (grande = fofinho)
-  if (pid === 'robo') {
+  if (robo) {
     add(new THREE.BoxGeometry(1.1, .95, .95), L(P[0]), 0, headY, hz);
-    add(new THREE.BoxGeometry(.8, .3, .05), B(0x00e5ff), 0, headY + .05, hz + .49);
+    add(new THREE.BoxGeometry(.8, .3, .05), B(rosa ? 0xffffff : 0x00e5ff), 0, headY + .05, hz + .49);
+    [-1, 1].forEach(s => add(new THREE.BoxGeometry(.16, .14, .03), B(rosa ? 0xd81b60 : 0x00838f), s * .2, headY + .05, hz + .52));
+    add(new THREE.BoxGeometry(.3, .06, .03), B(0x37474f), 0, headY - .2, hz + .49);
     add(new THREE.CylinderGeometry(.04, .04, .45, 6), L(0x555555), 0, headY + .7, hz);
-    add(S(.12), B(0xff1744), 0, headY + .95, hz);
-    [-1, 1].forEach(s => add(new THREE.CylinderGeometry(.15, .15, .1, 10), L(0x546e7a), s * .6, headY, hz).rotation.z = PI / 2);
+    add(S(.12), B(rosa ? 0xffeb3b : 0xff1744), 0, headY + .95, hz);
+    [-1, 1].forEach(s => add(new THREE.CylinderGeometry(.15, .15, .1, 10), L(rosa ? 0xd81b60 : 0x546e7a), s * .6, headY, hz).rotation.z = PI / 2);
+    if (rosa) { // lacinho
+      [-1, 1].forEach(s => { const b = add(new THREE.ConeGeometry(.22, .38, 4), L(0xff4fa3), s * .2, headY + .6, hz + .15); b.rotation.z = s * PI / 2; });
+      add(S(.1), L(0xff80ab), 0, headY + .6, hz + .15);
+    }
     return g;
   }
   add(S(.62, 18, 14), L(P[0]), 0, headY, hz, 1, .95, 1);
@@ -744,13 +768,18 @@ function buildPilot(pid, color) {
   });
   const ear = (geo, mat, x, y, z, rz, sx, sy, sz) => { const m = add(geo, mat, x, y, z, sx, sy, sz); m.rotation.z = rz; return m; };
   if (pid === 'menino') {
-    add(new THREE.SphereGeometry(.65, 16, 10, 0, TAU, 0, PI * .45), L(color), 0, headY + .05, hz);
-    add(new THREE.CylinderGeometry(.5, .5, .06, 16), L(color), 0, headY + .3, hz + .45, 1, 1, .8);
+    add(new THREE.SphereGeometry(.66, 16, 10, 0, TAU, 0, PI * .48), L(hair), 0, headY + .04, hz - .03);
+    [-.2, 0, .2].forEach((x, i) => add(S(.16, 8, 6), L(hair), x, headY + .42, hz + .42 - Math.abs(x) * .3, 1.1, .7, .8));
     add(S(.09), L(0xe0a96d), 0, headY - .05, hz + .62);
   } else if (pid === 'menina') {
-    add(new THREE.SphereGeometry(.67, 16, 10, 0, TAU, 0, PI * .55), L(0x6d3b1f), 0, headY + .02, hz - .02);
-    [-1, 1].forEach(s => { add(S(.26), L(0x6d3b1f), s * .7, headY - .05, hz - .1); add(S(.12), L(0xff4fa3), s * .55, headY + .25, hz - .05); });
+    add(new THREE.SphereGeometry(.68, 16, 10, 0, TAU, 0, PI * .56), L(hair), 0, headY + .02, hz - .03);
+    [-1, 1].forEach(s => { add(S(.27), L(hair), s * .72, headY - .08, hz - .1); add(S(.12), L(0xff4fa3), s * .56, headY + .24, hz - .05); });
     add(S(.17), L(0xff4fa3), 0, headY + .62, hz - .1, 1.6, .8, .8);
+    add(S(.08), L(0xe0a96d), 0, headY - .05, hz + .62);
+  } else if (pid === 'leao') {
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; add(S(.3, 10, 8), L(i % 2 ? 0xb5651d : 0xd2822a), Math.cos(a) * .66, headY + Math.sin(a) * .62, hz - .12); }
+    [-1, 1].forEach(s => add(S(.16), L(P[0]), s * .42, headY + .55, hz + .05));
+    add(S(.25), L(P[1]), 0, headY - .17, hz + .48, 1.2, .75, .8); add(S(.08), B(0x5d4037), 0, headY - .04, hz + .68);
   } else if (pid === 'cachorro') {
     [-1, 1].forEach(s => ear(S(.25), L(0x8b5a2b), s * .62, headY - .05, hz, s * .3, .55, 1.25, .5));
     add(S(.26), L(P[1]), 0, headY - .15, hz + .48, 1.1, .8, .9); add(S(.09), B(0x222222), 0, headY - .05, hz + .72);
@@ -808,7 +837,9 @@ function stats(r) {
 
 function spawnRacers(ti) {
   racers = [];
-  const order = [1, 2, 3, 0, 4, 5]; // jogador larga no meio do grid
+  const n = clamp(save.racers || 6, 4, 8), order = [];
+  for (let w = 1; w < n; w++) order.push(w);
+  order.splice(Math.floor(n / 2), 0, 0); // jogador larga no meio do grid
   order.forEach((who, k) => {
     const i = (N - 5 - Math.floor(k / 2) * 7) % N, lat = k % 2 ? -4.5 : 4.5;
     let color = COLORS[who];
@@ -833,7 +864,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye', 'avatar'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -841,10 +872,11 @@ function showScreen(id) {
 }
 
 function startRace(ti) {
-  curTrack = ti; buildTrack(ti); if (net.on) spawnOnlineRacers(net.participants); else spawnRacers(ti);
+  curTrack = ti; buildTrack(ti); if (net.on) spawnOnlineRacers(net.participants, net.bots); else spawnRacers(ti);
   LAPS = net.on ? (net.laps || 3) : save.laps;
   raceTime = 0; finishCount = 0; endT = 0; countT = 3.5; state = 'count';
   camH = player.h; camPos.set(player.x - Math.sin(camH) * 30, 14, player.z - Math.cos(camH) * 30);
+  $('hudRoom').style.display = net.on ? '' : 'none'; if (net.on) $('hudRoom').textContent = 'SALA ' + net.code.slice(0, 4) + ' ' + net.code.slice(4);
   setItemUI(); showScreen(null); renderVoice(); $('emoBar').classList.remove('on'); $('emoFeed').innerHTML = ''; Snd.engineStart(); lastCount = 99;
 }
 
@@ -893,11 +925,14 @@ function useItem(r) {
     if (net.on) send({ t: 'missile', mid, x, z, h: r.h, target: target ? target.id : null, owner: r.id });
   } else if (it === 'raio') {
     lightning(r);
-    if (net.on) send({ t: 'raio', owner: r.id });
+    if (net.on) { send({ t: 'raio', owner: r.id }); if (isHost()) raioBots(r.id); }
     else racers.forEach(o => { if (o !== r && !o.finished) { if (o.shield > 0) { o.shield = 0; return; } o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
     if (r.isPlayer || true) flash();
     if (!r.isPlayer) toast('🌩️ ' + r.name + ' usou o RAIO!');
   }
+}
+function raioBots(ownerId) {
+  racers.forEach(o => { if (o.id !== ownerId && o.isBot && !o.isRemote && !o.finished) { if (o.shield > 0) { o.shield = 0; return; } o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
 }
 function spawnBanana(x, z, owner, hid) {
   const m = new THREE.Mesh(new THREE.TorusGeometry(.7, .3, 8, 16, PI * 1.2), new THREE.MeshLambertMaterial({ color: 0xffe135 }));
@@ -1080,6 +1115,7 @@ function onLap(r) {
   }
   if (r.lap > LAPS && !r.finished) {
     r.finished = true; r.place = ++finishCount;
+    if (net.on && r.isBot && !r.isRemote && isHost()) { const ms = Math.round(raceTime * 1000); net.finishes[r.id] = ms; send({ t: 'fin', rid: net.raceId, id: r.id, ms }); updatePlaces(); }
     if (r.isPlayer) {
       r.finishMs = Math.round(raceTime * 1000);
       if (net.on) {
@@ -1199,27 +1235,34 @@ function renderPreview() {
   try {
     if (!prev) {
       const r = new THREE.WebGLRenderer({ canvas: $('pilotPrev'), antialias: true, alpha: true });
-      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); r.setSize(150, 102, false);
+      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); r.setSize(170, 124, false);
       const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x666677, 1.05));
       const d = new THREE.DirectionalLight(0xffffff, .6); d.position.set(5, 10, 8); sc.add(d);
-      prev = { r, sc, cam: new THREE.PerspectiveCamera(32, 150 / 102, .1, 100), kart: null, a: 0 };
+      prev = { r, sc, cam: new THREE.PerspectiveCamera(32, 170 / 124, .1, 100), kart: null, a: 0 };
     }
     if (prev.kart) prev.sc.remove(prev.kart.g);
     prev.kart = makeKart(KART_COLORS[save.color] || COLORS[0], save.pilot, prev.sc);
   } catch (e) { prev = null; }
 }
 function drawPreview(dt) {
-  if (!prev || !$('garage').classList.contains('on')) return;
+  if (!prev || !$('avatar').classList.contains('on')) return;
   prev.a += dt * .7; const a = Math.sin(prev.a) * 1.1;
   prev.cam.position.set(Math.sin(a) * 6.8, 3.4, Math.cos(a) * 6.8); prev.cam.lookAt(0, 1.7, 0);
   prev.r.render(prev.sc, prev.cam);
 }
-function renderGarage() {
+let avatarNext = 'solo';
+function renderAvatar() {
   setTimeout(renderPreview, 0);
+  if (!PILOTS.some(p => p.id === save.pilot)) save.pilot = 'menino';
   $('pilots').innerHTML = PILOTS.map(p => `<button class="pl ${p.id === save.pilot ? 'sel' : ''}" data-p="${p.id}"><span>${p.emoji}</span>${p.name}</button>`).join('');
-  $('pilots').querySelectorAll('.pl').forEach(b => b.onclick = () => { save.pilot = b.dataset.p; persist(); Snd.click(); if (net.on) trackMe(); renderGarage(); });
+  $('pilots').querySelectorAll('.pl').forEach(b => b.onclick = () => { save.pilot = b.dataset.p; persist(); Snd.click(); if (net.on) trackMe(); renderAvatar(); });
   $('swatches').innerHTML = KART_COLORS.map((c, i) => `<button class="sw ${i === save.color ? 'sel' : ''}" data-c="${i}" style="background:#${c.toString(16).padStart(6, '0')}"></button>`).join('');
-  $('swatches').querySelectorAll('.sw').forEach(b => b.onclick = () => { save.color = +b.dataset.c; persist(); Snd.click(); renderGarage(); });
+  $('swatches').querySelectorAll('.sw').forEach(b => b.onclick = () => { save.color = +b.dataset.c; persist(); Snd.click(); if (net.on) trackMe(); renderAvatar(); });
+}
+function goAvatar(next) { avatarNext = next; renderAvatar(); showScreen('avatar'); state = 'menu'; }
+$('avBack').onclick = () => goMenu();
+$('avOk').onclick = () => { Snd.click(); if (avatarNext === 'online') { $('onMsg').textContent = ''; $('codeIn').value = ''; renderRacers(); showScreen('online'); } else goSelect(); };
+function renderGarage() {
   $('ups').innerHTML = UPS.map(([k, n]) => {
     const lv = save.up[k], cost = 80 * (lv + 1), max = lv >= 5;
     return `<div class="up"><div class="lbl">${n}</div><div class="bars">${[0, 1, 2, 3, 4].map(j => `<i class="${j < lv ? 'on' : ''}"></i>`).join('')}</div>
@@ -1230,7 +1273,7 @@ function renderGarage() {
     if (lv < 5 && save.coins >= cost) { save.coins -= cost; save.up[k]++; persist(); renderGarage(); showScreen('garage'); }
   });
 }
-function goSelect() { renderTracks(); renderLaps(); showScreen('select'); state = 'menu'; }
+function goSelect() { renderTracks(); renderLaps(); renderRacers(); showScreen('select'); state = 'menu'; }
 function goMenu() { state = 'menu'; showScreen('menu'); }
 $('quitGame').onclick = async () => {
   Snd.music(0); if (isFS()) await exitFS();
@@ -1247,6 +1290,19 @@ function renderLaps() {
   document.querySelectorAll('.lapVal').forEach(e => e.textContent = n);
   document.querySelectorAll('.hostOnly').forEach(e => e.style.display = !net.on || isHost() ? '' : 'none');
 }
+function renderRacers() {
+  const n = net.on ? (net.size || 6) : save.racers;
+  document.querySelectorAll('.racerVal').forEach(e => e.textContent = n);
+}
+function changeRacers(d) {
+  if (net.on) {
+    if (!isHost() || net.phase !== 'lobby') return;
+    net.size = clamp((net.size || 6) + d, Math.max(4, Math.min(net.order.length, MAX_ROOM)), MAX_ROOM); send({ t: 'size', n: net.size }); trackMe(); renderRoom();
+  } else { save.racers = clamp(save.racers + d, 4, 8); persist(); }
+  Snd.click(); renderRacers();
+}
+document.querySelectorAll('.racerMinus').forEach(b => b.onclick = () => changeRacers(-1));
+document.querySelectorAll('.racerPlus').forEach(b => b.onclick = () => changeRacers(1));
 function changeLaps(d) {
   if (net.on) { if (!isHost()) return; net.laps = clamp((net.laps || 3) + d, 1, 10); send({ t: 'laps', n: net.laps }); }
   else { save.laps = clamp(save.laps + d, 1, 10); persist(); }
@@ -1254,8 +1310,8 @@ function changeLaps(d) {
 }
 document.querySelectorAll('.lapMinus').forEach(b => b.onclick = () => changeLaps(-1));
 document.querySelectorAll('.lapPlus').forEach(b => b.onclick = () => changeLaps(1));
-$('fsPlay').onclick = async () => { await enterFS(); goSelect(); };
-$('play').onclick = goSelect;
+$('fsPlay').onclick = async () => { await enterFS(); goAvatar('solo'); };
+$('play').onclick = () => goAvatar('solo');
 $('garageBtn').onclick = () => { renderGarage(); showScreen('garage'); };
 $('garBack').onclick = goMenu;
 $('selBack').onclick = goMenu;
@@ -1417,7 +1473,7 @@ let netSeq = 0, stT = 0, netTick = 0;
 function send(o) { if (net.ch) net.ch.send({ type: 'broadcast', event: 'm', payload: o }); }
 function genCode() { let s = '' + (1 + Math.floor(Math.random() * 9)); for (let i = 0; i < 7; i++) s += Math.floor(Math.random() * 10); return s; }
 
-$('onlineBtn').onclick = () => { if (goNameIfNeeded()) return; $('onMsg').textContent = ''; $('codeIn').value = ''; showScreen('online'); };
+$('onlineBtn').onclick = () => { if (goNameIfNeeded()) return; goAvatar('online'); };
 $('onBack').onclick = goMenu;
 $('codeIn').addEventListener('input', () => { $('codeIn').value = $('codeIn').value.replace(/\D/g, '').slice(0, 8); });
 $('createRoom').onclick = async () => { $('onMsg').textContent = 'Criando sala...'; if (await openRoom(genCode(), true)) { net.synced = true; showScreen('room'); renderRoom(); } };
@@ -1432,7 +1488,7 @@ function openRoom(code, creating) {
   leaveRoom(true);
   Object.assign(net, { on: true, code, phase: 'lobby', players: new Map(), order: [], host: null, votes: {}, voteEnd: 0, voteDone: false, track: 0, raceId: 0,
     participants: [], finishes: {}, live: {}, joinedAt: Date.now(), firstFinishAt: 0, endSent: false, resultsAt: 0, synced: false, spectating: false,
-    voice: false, micOn: true, peers: new Map(), early: {}, laps: save.laps, emo: {} });
+    voice: false, micOn: true, peers: new Map(), early: {}, laps: save.laps, emo: {}, size: save.racers, waitEnd: performance.now() + 120000, waitAsk: false, bots: [], lastSec: -1 });
   const ch = sb.channel('kart-room-' + code, { config: { broadcast: { self: false }, presence: { key: myId() } } });
   net.ch = ch;
   ch.on('presence', { event: 'sync' }, onPresence);
@@ -1444,7 +1500,7 @@ function openRoom(code, creating) {
         done = true; await trackMe();
         if (creating) return res(true);
         setTimeout(() => {
-          if (net.order.indexOf(myId()) >= MAX_ROOM) { leaveRoom(true); $('onMsg').textContent = 'Essa sala está cheia (máximo de ' + MAX_ROOM + ' pilotos).'; showScreen('online'); res(false); }
+          if (net.order.indexOf(myId()) >= (net.size || MAX_ROOM)) { leaveRoom(true); $('onMsg').textContent = 'Essa sala está cheia (' + (net.size || MAX_ROOM) + ' pilotos).'; showScreen('online'); res(false); }
           else if ([...net.players.keys()].some(k => k !== myId())) res(true);
           else { leaveRoom(true); $('onMsg').textContent = 'Sala não encontrada. Confira o código.'; showScreen('online'); res(false); }
         }, 2500);
@@ -1452,7 +1508,7 @@ function openRoom(code, creating) {
     });
   });
 }
-function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, pilot: save.pilot, voice: net.voice }) : null; }
+function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, pilot: save.pilot, voice: net.voice, size: net.size }) : null; }
 
 function leaveRoom(silent) {
   voiceOff(true);
@@ -1467,12 +1523,14 @@ $('startVote').onclick = () => { if (isHost() && net.phase === 'lobby') startVot
 
 function onPresence() {
   const st = net.ch.presenceState(), prev = net.players, m = new Map();
-  for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, pilot: meta.pilot, voice: !!meta.voice }); }
+  for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, pilot: meta.pilot, voice: !!meta.voice, size: meta.size }); }
   net.players = m;
   net.order = [...m.values()].sort((a, b) => a.joinedAt - b.joinedAt || (a.id < b.id ? -1 : 1)).map(p => p.id);
   net.host = net.order[0];
+  if (!isHost()) { const hp = m.get(net.host); if (hp && hp.size) net.size = hp.size; }
   const joined = [...m.keys()].filter(k => !prev.has(k) && k !== myId());
-  [...prev.keys()].filter(k => !m.has(k)).forEach(k => { removeRemote(k); closePeer(k); });
+  [...prev.keys()].filter(k => !m.has(k)).forEach(k => { closePeer(k); if (net.phase === 'race' && racers.some(r => r.id === k)) botify(k); else removeRemote(k); });
+  if (net.phase === 'race' && isHost()) racers.forEach(r => { if (r.isBot && r.isRemote) takeOverBot(r); });
   if (isHost() && joined.length) sendSync();
   voiceReconcile(); renderRoom();
   if (net.phase === 'race' && isHost()) checkRaceEnd();
@@ -1502,22 +1560,31 @@ function onNet(p) {
       if (net.spectating) renderRoom();
       break;
     }
+    case 'bst':
+      if (p.rid !== net.raceId) return;
+      p.list.forEach(b => {
+        const r = racers.find(o => o.id === b.id); if (!r || !r.isRemote) return;
+        r.isBot = true; if (b.n) r.name = b.n;
+        r.net = { x: b.x, z: b.z, h: b.h, v: b.v, sp: b.sp, sl: b.sl, b: b.b, sh: b.sh, t: performance.now() }; r.lap = b.lap; r.idx = b.idx; r.prog = b.lap * N + b.idx - N;
+      });
+      break;
+    case 'size': net.size = p.n; renderRacers(); renderRoom(); break;
     case 'fin': {
       if (p.rid !== net.raceId) return;
-      net.finishes[p.id] = p.ms; if (!net.firstFinishAt) net.firstFinishAt = performance.now();
+      net.finishes[p.id] = p.ms; if (!net.firstFinishAt && net.participants.includes(p.id)) net.firstFinishAt = performance.now();
       const r = racers.find(o => o.id === p.id); if (r) { r.finished = true; }
       updatePlaces(); if (isHost()) checkRaceEnd(); if (net.spectating) renderRoom();
       break;
     }
     case 'end': if (p.rid === net.raceId) endOnline(); break;
-    case 'quit': if (p.rid === net.raceId) { removeRemote(p.id); if (isHost()) checkRaceEnd(); renderRoom(); } break;
+    case 'quit': if (p.rid === net.raceId) { botify(p.id); if (isHost()) checkRaceEnd(); renderRoom(); } break;
     case 'banana': if (state === 'race' || state === 'count') spawnBanana(p.x, p.z, racers.find(o => o.id === p.owner) || null, p.hid); break;
     case 'hzGone': { const k = hazards.findIndex(h => h.hid === p.hid); if (k >= 0) { world.remove(hazards[k].m); hazards.splice(k, 1); } break; }
     case 'missile': if (state === 'race' || state === 'count') spawnMissile(p.x, p.z, p.h, racers.find(o => o.id === p.target) || null, racers.find(o => o.id === p.owner) || null, p.mid); break;
     case 'msGone': { const k = missiles.findIndex(m => m.mid === p.mid); if (k >= 0) { world.remove(missiles[k].g); missiles.splice(k, 1); } break; }
     case 'raio':
       if ((state === 'race' || state === 'count') && player && !player.finished && net.participants.includes(myId())) {
-        const o = racers.find(x => x.id === p.owner); if (o) lightning(o); Snd.thunder();
+        const o = racers.find(x => x.id === p.owner); if (o) lightning(o); Snd.thunder(); if (isHost()) raioBots(p.owner);
         if (player.shield > 0) { player.shield = 0; toast('🛡️ O ESCUDO TE PROTEGEU DO RAIO!'); Snd.shield(); }
         else { player.slow = 3.5; player.spin = Math.max(player.spin, .6); flash(); toast('🌩️ ' + nameOf(p.owner) + ' usou o RAIO!'); }
       }
@@ -1554,21 +1621,37 @@ function tallyVotes() {
 }
 function hostStartRace() {
   net.voteDone = true;
-  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice(0, MAX_ROOM), laps: net.laps || 3 };
+  const parts = net.order.slice(0, net.size || MAX_ROOM), bots = [];
+  const usedNames = parts.map(id => nameOf(id).toLowerCase());
+  const freeNames = BOT_NAMES.filter(n => !usedNames.includes(n.toLowerCase()));
+  for (let k = parts.length; k < (net.size || 6); k++) {
+    bots.push({ id: 'bot-' + k, name: (freeNames[k - parts.length] || 'Bot' + k) + ' 🤖', pilot: PILOTS[Math.floor(Math.random() * PILOTS.length)].id });
+  }
+  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: parts, bots, laps: net.laps || 3 };
   send(msg); startOnline(msg);
 }
 function startOnline(p) {
-  net.phase = 'race'; net.track = p.track; net.raceId = p.raceId; net.participants = p.participants; net.laps = p.laps || 3;
+  net.phase = 'race'; net.track = p.track; net.raceId = p.raceId; net.participants = p.participants; net.laps = p.laps || 3; net.bots = p.bots || [];
   net.finishes = {}; net.live = {}; net.firstFinishAt = 0; net.endSent = false; net.voteDone = true; net.synced = true;
   if (!p.participants.includes(myId())) { net.spectating = true; showScreen('room'); renderRoom(); return; }
   net.spectating = false;
   toast('🏁 ' + TRACKS[p.track].name, 2);
   startRace(p.track);
 }
-function spawnOnlineRacers(parts) {
+function spawnOnlineRacers(parts, bots) {
   racers = [];
   const usedColors = [KART_COLORS[save.color] || COLORS[0]];
-  parts.forEach((id, k) => {
+  const all = parts.concat((bots || []).map(b => b.id)), botMap = {}; (bots || []).forEach(b => botMap[b.id] = b);
+  all.forEach((id, k) => {
+    if (botMap[id]) {
+      const b = botMap[id], i = (N - 5 - Math.floor(k / 2) * 7 + N * 2) % N, lat = k % 2 ? -4.5 : 4.5;
+      const color = KART_COLORS.find(c => !usedColors.includes(c)) || COLORS[k % COLORS.length]; usedColors.push(color);
+      const r = { color, id, name: b.name, isPlayer: false, isBot: true, isRemote: !isHost(), kart: makeKart(color, b.pilot),
+        x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
+        spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0, aiOff: rnd(-4, 4), aiOffT: 0, aiMax: 50 + Math.min(net.track, 14) * 1.35 + rnd(0, 5) };
+      r.prog = r.idx - N; r.net = { x: r.x, z: r.z, h: r.h, v: 0, t: 0 };
+      racers.push(r); return;
+    }
     const i = (N - 5 - Math.floor(k / 2) * 7 + N * 2) % N, lat = k % 2 ? -4.5 : 4.5;
     const pl = net.players.get(id) || {}, me = id === myId();
     let color = KART_COLORS[me ? save.color : pl.color] || COLORS[k % COLORS.length];
@@ -1590,6 +1673,16 @@ function updateRemote(r, dt) {
   r.slow = s.sl ? 1 : 0; r.boost = s.b ? 1 : 0; r.shield = s.sh ? 1 : 0;
   if (s.sp) r.spinA += dt * 14; else r.spinA *= .8;
   kartVisual(r, dt, 0);
+}
+function botify(id) {
+  const r = racers.find(x => x.id === id); if (!r) return;
+  net.participants = net.participants.filter(x => x !== id);
+  r.isBot = true; if (!/🤖$/.test(r.name)) r.name += ' 🤖';
+  if (isHost()) takeOverBot(r);
+}
+function takeOverBot(r) {
+  r.isRemote = false; r.isPlayer = false; r.item = null; r.rolling = 0; r.aiOff = rnd(-4, 4); r.aiOffT = 0;
+  r.aiMax = 50 + Math.min(net.track, 14) * 1.35 + rnd(0, 5);
 }
 function removeRemote(id) {
   const k = racers.findIndex(r => r.isRemote && r.id === id);
@@ -1614,7 +1707,8 @@ function endOnline() {
 }
 function renderRoom() {
   if (!net.on) return;
-  $('roomCount').textContent = Math.min(net.order.length, MAX_ROOM) + '/' + MAX_ROOM;
+  $('roomCount').textContent = Math.min(net.order.length, net.size || MAX_ROOM) + '/' + (net.size || MAX_ROOM);
+  renderRacers();
   $('roomCode').textContent = net.code.slice(0, 4) + ' ' + net.code.slice(4);
   $('roomList').innerHTML = net.order.map(id => {
     const p = net.players.get(id), me = id === myId();
@@ -1627,18 +1721,30 @@ function renderRoom() {
     return `<div class="${me ? 'me' : ''}">${id === net.host ? '👑 ' : ''}${pe} ${esc(p.name)}${me ? ' (você)' : ''} ${p.voice ? '🎙️' : ''}${em} <small>${st}</small></div>`;
   }).join('');
   let s = '';
-  if (net.phase === 'lobby') s = isHost() ? 'Você é o dono da sala! Mande o código para os amigos e toque em COMEÇAR.' : 'Aguardando ' + nameOf(net.host) + ' começar a votação...';
+  if (net.phase === 'lobby') {
+    const left = Math.max(0, Math.ceil((net.waitEnd - performance.now()) / 1000)), mm = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+    const bots = Math.max(0, (net.size || 6) - net.order.length);
+    s = isHost() ? (net.waitAsk ? 'O tempo de espera acabou.' : 'Aguardando participantes... ' + mm + '. Mande o código para os amigos! Você pode começar quando quiser.') : 'Aguardando ' + nameOf(net.host) + ' começar a corrida...';
+    if (bots) s += ' (' + bots + ' bot' + (bots > 1 ? 's' : '') + ' completa' + (bots > 1 ? 'm' : '') + ' as vagas)';
+  }
   else if (net.phase === 'race') s = 'Corrida em andamento: ' + TRACKS[net.track].name + '. Você entra na próxima!';
   else if (net.phase === 'results') s = 'A votação da próxima pista vai começar...';
   else if (net.phase === 'vote') s = 'Votação em andamento...';
   $('roomStatus').textContent = s;
   $('startVote').style.display = isHost() && net.phase === 'lobby' ? '' : 'none';
+  $('waitAsk').style.display = isHost() && net.phase === 'lobby' && net.waitAsk ? '' : 'none';
   renderLaps();
   renderVoice();
 }
+$('waitMore').onclick = () => { net.waitEnd = performance.now() + 60000; net.waitAsk = false; Snd.click(); renderRoom(); };
+$('waitGo').onclick = () => { if (isHost() && net.phase === 'lobby') { net.waitAsk = false; startVote(); } };
 function netLoop(dt) {
   if (!net.on) return;
   const now = performance.now();
+  if (net.phase === 'lobby' && $('room').classList.contains('on')) {
+    if (isHost() && !net.waitAsk && now >= net.waitEnd) { net.waitAsk = true; Snd.lap(); }
+    const sec = Math.floor(now / 1000); if (sec !== net.lastSec) { net.lastSec = sec; renderRoom(); }
+  }
   if (net.phase === 'vote') {
     const left = Math.max(0, Math.ceil((net.voteEnd - now) / 1000));
     $('voteTimer').textContent = left + 's';
@@ -1653,6 +1759,11 @@ function netLoop(dt) {
       stT = n <= 3 ? 1 / 10 : n <= 5 ? 1 / 7 : 1 / 5;
       send({ t: 'st', rid: net.raceId, id: myId(), x: +player.x.toFixed(2), z: +player.z.toFixed(2), h: +player.h.toFixed(3), v: +player.v.toFixed(1),
         lap: player.lap, idx: player.idx, sh: player.shield > 0 ? 1 : 0, sp: player.spin > 0 ? 1 : 0, sl: player.slow > 0 ? 1 : 0, b: player.boost > 0 ? 1 : 0 });
+      if (isHost()) {
+        const bl = racers.filter(r => r.isBot && !r.isRemote).map(r => ({ id: r.id, n: r.name, x: +r.x.toFixed(2), z: +r.z.toFixed(2), h: +r.h.toFixed(3), v: +r.v.toFixed(1),
+          lap: r.lap, idx: r.idx, sh: r.shield > 0 ? 1 : 0, sp: r.spin > 0 ? 1 : 0, sl: r.slow > 0 ? 1 : 0, b: r.boost > 0 ? 1 : 0 }));
+        if (bl.length) send({ t: 'bst', rid: net.raceId, list: bl });
+      }
     }
   }
 }
@@ -1753,6 +1864,29 @@ function renderVoice() {
 $('voiceBtn').onclick = () => net.voice ? voiceOff() : voiceOn();
 $('micBtn').onclick = toggleMic;
 $('hudMic').onclick = toggleMic;
+
+// ============ ATUALIZAÇÃO AUTOMÁTICA ============
+const GAME_VERSION = 8; // aumentar junto com version.json a cada atualização publicada
+let newVersion = 0;
+async function checkUpdate() {
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const v = (await r.json()).version;
+    if (v > GAME_VERSION) newVersion = v;
+  } catch (e) {}
+  showUpdate();
+}
+function showUpdate() {
+  const racing = state === 'race' || state === 'count' || state === 'pause';
+  $('updBtn').style.display = newVersion && !racing ? '' : 'none';
+}
+$('updBtn').onclick = () => {
+  $('updBtn').textContent = 'Atualizando...';
+  location.replace(location.pathname + '?v=' + newVersion + '&t=' + Date.now());
+};
+if (location.protocol.startsWith('http')) { checkUpdate(); setInterval(checkUpdate, 60000); setInterval(showUpdate, 1000); }
+if (/[?&]v=/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash);
 
 buildTrack(0);
 showMeName();
