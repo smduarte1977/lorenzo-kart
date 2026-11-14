@@ -87,6 +87,16 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 .sw{width:38px;height:38px;border-radius:50%;border:3px solid rgba(255,255,255,.3)}
 .sw.sel{border:4px solid #fff;box-shadow:0 0 12px #fff}
 .btn.s{padding:8px 14px;font-size:clamp(12px,3vh,16px)}
+.inp{font-family:inherit;font-size:clamp(18px,4.5vh,26px);padding:10px 14px;border-radius:12px;border:3px solid #7cc8ff;background:rgba(0,0,0,.4);color:#fff;text-align:center;width:min(360px,80vw);outline:none}
+.code{font-size:clamp(34px,10vh,64px);color:#3dff9a;letter-spacing:6px;text-shadow:0 4px 0 #0d6e3c}
+.desk{display:none}
+@media (pointer:fine){.desk{display:block}}
+.keys{font-size:12px;color:#cfe9ff;font-family:system-ui,sans-serif;background:rgba(0,0,0,.35);border-radius:10px;padding:6px 12px}
+.keys b{background:#fff;color:#10203a;border-radius:4px;padding:1px 6px;margin:0 2px;font-family:system-ui;font-size:11px}
+.res small{font-size:.7em;color:#cfe9ff}
+.tcard.voted{border-color:#ffd23f;background:rgba(255,210,63,.25)}
+.klabel{font-size:11px;font-family:system-ui;color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:1px 6px}
+.scroll{max-height:42vh;overflow-y:auto;touch-action:pan-y}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0b1e;font-size:24px;z-index:60}
 </style>
 </head>
@@ -98,7 +108,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div id="hud">
   <div id="hudTL" class="safe"><div id="pos">1<small>º/6</small></div><div id="lap">VOLTA 1/3</div><div id="spd">0 km/h</div></div>
   <div id="hudTR" class="safe">
-    <div class="hbtns"><button class="icon-btn" id="pauseBtn">II</button><button class="icon-btn" id="fsHud">⛶</button></div>
+    <div class="hbtns"><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">II</button><button class="icon-btn" id="fsHud">⛶</button></div>
     <canvas id="mini" width="260" height="200"></canvas>
   </div>
   <div id="toast"></div>
@@ -109,7 +119,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div id="controls" class="safe">
   <div class="cgroup"><button class="cbtn" id="left">◀</button><button class="cbtn" id="right">▶</button></div>
   <div class="cgroup">
-    <div class="rcol"><button class="cbtn" id="itemBtn"></button><button class="cbtn" id="brake">RÉ</button></div>
+    <div class="rcol"><span class="klabel desk">ESPAÇO</span><button class="cbtn" id="itemBtn"></button><button class="cbtn" id="brake">RÉ</button></div>
     <button class="cbtn" id="gas">▲</button>
   </div>
 </div>
@@ -117,12 +127,14 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <!-- Menu -->
 <div class="screen on" id="menu">
   <h1>LORENZO KART</h1>
-  <div class="coins">🪙 <span class="cn">0</span> · 🏆 <span id="wins">0</span> vitórias</div>
+  <div class="coins">👤 <span id="meName">—</span> <button class="btn s g" id="changeName">trocar</button> · 🪙 <span class="cn">0</span> · 🏆 <span id="wins">0</span></div>
   <div class="row">
     <button class="btn" id="fsPlay">⛶ JOGAR EM TELA CHEIA</button>
-    <button class="btn y" id="play">JOGAR</button>
-    <button class="btn b" id="garageBtn">🔧 GARAGEM</button>
+    <button class="btn y" id="play">JOGAR SOZINHO</button>
+    <button class="btn" id="onlineBtn">🌐 CORRER ONLINE</button>
   </div>
+  <div class="row"><button class="btn b s" id="garageBtn">🔧 GARAGEM</button><button class="btn b s" id="recBtn">🏆 RECORDES</button></div>
+  <div class="keys desk">No computador: <b>←</b><b>→</b> virar · <b>↑</b> acelerar · <b>↓</b> ré · <b>ESPAÇO</b> ou <b>E</b> jogar item (banana, míssil, raio, turbo) · <b>P</b> pausa · <b>F</b> tela cheia</div>
   <div class="row"><button class="btn s b musBtn"></button><button class="btn s b sfxBtn"></button></div>
   <div class="sub">Pegue os blocos da sorte ❓ · Passe nas faixas de turbo · Atrapalhe os adversários!</div>
   <div id="iosTip">No iPhone, a Apple não deixa site entrar em tela cheia por botão. Toque em Compartilhar ⬆ → "Adicionar à Tela de Início" e abra pelo ícone: fica sem barra do navegador.</div>
@@ -157,13 +169,61 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <h2 id="resTitle">CHEGADA!</h2>
   <div class="res" id="resList"></div>
   <div class="coins" id="resCoins"></div>
-  <div class="row"><button class="btn" id="resNext">CONTINUAR</button><button class="btn b" id="resGarage">🔧 GARAGEM</button></div>
+  <div class="sub" id="resOnline"></div>
+  <div class="row" id="resBtns"><button class="btn" id="resNext">CONTINUAR</button><button class="btn b" id="resGarage">🔧 GARAGEM</button></div>
 </div>
+
+<!-- Nome do piloto -->
+<div class="screen" id="nameScr">
+  <h2>QUAL SEU NOME DE PILOTO?</h2>
+  <input class="inp" id="nameIn" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ex: Lorenzo_10">
+  <div class="sub">3 a 16 letras ou números, sem espaço. Pode usar _ (underline).<br>Esse nome é seu ID: ele fica registrado e aparece nos recordes.</div>
+  <div class="sub" id="nameMsg" style="color:#ffd23f"></div>
+  <div class="row"><button class="btn" id="nameOk">CONFIRMAR</button></div>
+</div>
+
+<!-- Recordes -->
+<div class="screen" id="records">
+  <h2>🏆 RECORDES</h2>
+  <div class="row" id="recTabs"></div>
+  <div class="sub" id="recTitle"></div>
+  <div class="res scroll" id="recList"></div>
+  <div class="row"><button class="btn g" id="recBack">VOLTAR</button></div>
+</div>
+
+<!-- Online -->
+<div class="screen" id="online">
+  <h2>🌐 CORRER ONLINE</h2>
+  <div class="row"><button class="btn y" id="createRoom">➕ CRIAR SALA</button></div>
+  <div class="sub">ou entre na sala de um amigo:</div>
+  <div class="row"><input class="inp" id="codeIn" inputmode="numeric" maxlength="8" placeholder="código de 8 números"><button class="btn" id="joinRoom">ENTRAR</button></div>
+  <div class="sub" id="onMsg" style="color:#ffd23f"></div>
+  <div class="row"><button class="btn g" id="onBack">VOLTAR</button></div>
+</div>
+
+<!-- Sala -->
+<div class="screen" id="room">
+  <div class="sub">CÓDIGO DA SALA</div>
+  <div class="row" style="align-items:center"><div class="code" id="roomCode"></div><button class="btn s b" id="copyCode">📋 Copiar</button></div>
+  <div class="res scroll" id="roomList"></div>
+  <div class="sub" id="roomStatus"></div>
+  <div class="row"><button class="btn s b" id="voiceBtn"></button><button class="btn s b" id="micBtn"></button></div>
+  <div class="row"><button class="btn" id="startVote">▶ COMEÇAR</button><button class="btn g" id="leaveRoom">SAIR DA SALA</button></div>
+</div>
+
+<!-- Votação -->
+<div class="screen" id="vote">
+  <h2>VOTE NA PISTA · <span id="voteTimer">20s</span></h2>
+  <div class="tracks" id="voteTracks"></div>
+  <div class="sub" id="voteInfo"></div>
+</div>
+<div id="audios" style="display:none"></div>
 
 <div id="rotate"><div class="phone"></div><div>Gire o celular<br>para a horizontal</div></div>
 <div id="loading">Carregando...</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -454,14 +514,14 @@ function buildTrack(ti) {
   banner.position.y = 9; gate.add(banner); world.add(gate);
 
   // Montanhas ao fundo
-  const mMat = new THREE.MeshLambertMaterial({ color: th.mount, flatShading: true });
+  const mMat = new THREE.MeshLambertMaterial({ color: th.mount });
   for (let i = 0; i < 18; i++) {
     const a = i / 18 * TAU + rnd(-.1, .1), d = radius + rnd(220, 380), hgt = rnd(60, 150);
     const m = new THREE.Mesh(new THREE.ConeGeometry(rnd(60, 110), hgt, 6), mMat);
     m.position.set(center.x + Math.cos(a) * d, hgt / 2 - 2, center.z + Math.sin(a) * d); world.add(m);
   }
   if (th.deco === 'rock') { // vulcão central
-    const v = new THREE.Mesh(new THREE.ConeGeometry(70, 110, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0x2a1a18, flatShading: true }));
+    const v = new THREE.Mesh(new THREE.ConeGeometry(70, 110, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0x2a1a18 }));
     const far = { x: center.x + radius + 160, z: center.z - radius - 120 }; v.position.set(far.x, 54, far.z); world.add(v);
     const lava = new THREE.Mesh(new THREE.CircleGeometry(16, 16), new THREE.MeshBasicMaterial({ color: 0xff5a00 }));
     lava.rotation.x = -PI / 2; lava.position.set(far.x, 108, far.z); world.add(lava);
@@ -520,7 +580,7 @@ function buildDeco(th) {
     if (distToTrack(x, z) > ROAD_W / 2 + 17) spots.push([x, z, rnd(.7, 1.5), Math.random() * TAU]);
   }
   const parts = [];
-  const L = (c, opt) => new THREE.MeshLambertMaterial(Object.assign({ color: c, flatShading: true }, opt || {}));
+  const L = (c, opt) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, opt || {}));
   if (th.deco === 'tree') {
     parts.push({ geo: new THREE.CylinderGeometry(.4, .6, 3, 6), mat: L(0x7a4a26), y: 1.5 });
     parts.push({ geo: new THREE.IcosahedronGeometry(2.8, 0), mat: L(0xffffff), y: 5, colors: [0x2e7d32, 0x43a047, 0x66bb6a, 0x9ccc65] });
@@ -617,12 +677,13 @@ function spawnRacers(ti) {
 
 // ============ ESTADO DO JOGO ============
 let lastCount = 99, tickT = 0;
+let raceTime = 0;
 let state = 'menu', curTrack = 0, countT = 0, endT = 0, finishCount = 0, menuT = 0, camH = 0;
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -630,8 +691,8 @@ function showScreen(id) {
 }
 
 function startRace(ti) {
-  curTrack = ti; buildTrack(ti); spawnRacers(ti);
-  finishCount = 0; endT = 0; countT = 3.5; state = 'count';
+  curTrack = ti; buildTrack(ti); if (net.on) spawnOnlineRacers(net.participants); else spawnRacers(ti);
+  raceTime = 0; finishCount = 0; endT = 0; countT = 3.5; state = 'count';
   camH = player.h; camPos.set(player.x - Math.sin(camH) * 30, 14, player.z - Math.cos(camH) * 30);
   setItemUI(); showScreen(null); Snd.engineStart(); lastCount = 99;
 }
@@ -659,22 +720,32 @@ function useItem(r) {
   if (it === 'turbo' && near) Snd.boost(); else if (it === 'banana' && near) Snd.banana(); else if (it === 'missil' && near) Snd.missile(); else if (it === 'raio') Snd.thunder();
   if (it === 'turbo') r.boost = 2.2;
   else if (it === 'banana') {
-    const m = new THREE.Mesh(new THREE.TorusGeometry(.7, .3, 8, 16, PI * 1.2), new THREE.MeshLambertMaterial({ color: 0xffe135 }));
-    const x = r.x - Math.sin(r.h) * 4, z = r.z - Math.cos(r.h) * 4; m.position.set(x, .5, z); m.rotation.z = PI * .9;
-    world.add(m); hazards.push({ m, x, z, owner: r, t: 0 });
+    const x = r.x - Math.sin(r.h) * 4, z = r.z - Math.cos(r.h) * 4, hid = myId() + '-' + (++netSeq);
+    spawnBanana(x, z, r, hid);
+    if (net.on) send({ t: 'banana', hid, x, z, owner: r.id });
   } else if (it === 'missil') {
     let target = null, bd = 1e9;
     racers.forEach(o => { if (o !== r && !o.finished) { const d = o.prog - r.prog; if (d > 0 && d < bd) { bd = d; target = o; } } });
-    const g = new THREE.Group();
-    const b = new THREE.Mesh(new THREE.SphereGeometry(.8, 12, 10), new THREE.MeshBasicMaterial({ color: 0xff1744 })); g.add(b);
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(.5, 1.2, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); tip.rotation.x = PI / 2; tip.position.z = .9; g.add(tip);
-    g.position.set(r.x + Math.sin(r.h) * 3, 1.2, r.z + Math.cos(r.h) * 3); world.add(g);
-    missiles.push({ g, x: g.position.x, z: g.position.z, h: r.h, target, owner: r, life: 7 });
+    const x = r.x + Math.sin(r.h) * 3, z = r.z + Math.cos(r.h) * 3, mid = myId() + '-' + (++netSeq);
+    spawnMissile(x, z, r.h, target, r, mid);
+    if (net.on) send({ t: 'missile', mid, x, z, h: r.h, target: target ? target.id : null, owner: r.id });
   } else if (it === 'raio') {
-    racers.forEach(o => { if (o !== r && !o.finished) { o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
+    if (net.on) send({ t: 'raio', owner: r.id });
+    else racers.forEach(o => { if (o !== r && !o.finished) { o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
     if (r.isPlayer || true) flash();
     if (!r.isPlayer) toast('🌩️ ' + r.name + ' usou o RAIO!');
   }
+}
+function spawnBanana(x, z, owner, hid) {
+  const m = new THREE.Mesh(new THREE.TorusGeometry(.7, .3, 8, 16, PI * 1.2), new THREE.MeshLambertMaterial({ color: 0xffe135 }));
+  m.position.set(x, .5, z); m.rotation.z = PI * .9; world.add(m); hazards.push({ m, x, z, owner, t: 0, hid });
+}
+function spawnMissile(x, z, h, target, owner, mid) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(.8, 12, 10), new THREE.MeshBasicMaterial({ color: 0xff1744 })));
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(.5, 1.2, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); tip.rotation.x = PI / 2; tip.position.z = .9; g.add(tip);
+  g.position.set(x, 1.2, z); world.add(g);
+  missiles.push({ g, x, z, h, target, owner, life: 7, mid });
 }
 function hit(r, t) {
   if (r.finished) return;
@@ -753,7 +824,9 @@ function updateRacer(r, dt, canDrive) {
     const skid = r.spin > 0 ? 1 : (brake && r.v > 20) ? .8 : (Math.abs(steer) > .85 && r.v > 45) ? .35 : 0;
     Snd.engineUpdate(r.v, gas, onCurb && r.v > 8, skid, r.boost > 0);
   }
-  // visual
+  kartVisual(r, dt, steer);
+}
+function kartVisual(r, dt, steer) {
   const k = r.kart; k.g.position.set(r.x, 0, r.z); k.g.rotation.y = r.h + r.spinA;
   const sc = r.slow > 0 ? .65 : 1; k.g.scale.x += (sc - k.g.scale.x) * .15; k.g.scale.y = k.g.scale.z = k.g.scale.x;
   k.body.rotation.z = -steer * .06 * clamp(r.v / 40, 0, 1); k.body.position.y = Math.abs(Math.sin(performance.now() / 60)) * .04 * (r.v / 50);
@@ -771,15 +844,32 @@ function aiSteer(r, dt) {
 function onLap(r) {
   if (r.lap > LAPS && !r.finished) {
     r.finished = true; r.place = ++finishCount;
-    if (r.isPlayer) { Snd.finish(); toast(r.place === 1 ? '🏆 VOCÊ VENCEU!' : 'CHEGADA! ' + r.place + 'º', 3); endT = 3; }
+    if (r.isPlayer) {
+      r.finishMs = Math.round(raceTime * 1000);
+      if (net.on) {
+        net.finishes[myId()] = r.finishMs; if (!net.firstFinishAt) net.firstFinishAt = performance.now();
+        send({ t: 'fin', rid: net.raceId, id: myId(), ms: r.finishMs }); updatePlaces();
+        if (isHost()) checkRaceEnd();
+        Snd.finish(); toast((r.place === 1 ? '🏆 VOCÊ VENCEU! ' : 'CHEGADA! ' + r.place + 'º ') + fmtMs(r.finishMs), 3);
+        setTimeout(() => { if (net.on && net.phase === 'race') toast('Aguardando os outros pilotos...', 30); }, 3200);
+      } else { Snd.finish(); toast((r.place === 1 ? '🏆 VOCÊ VENCEU! ' : 'CHEGADA! ' + r.place + 'º ') + fmtMs(r.finishMs), 3); endT = 3; }
+    }
   } else if (r.isPlayer && r.lap === LAPS) { toast('ÚLTIMA VOLTA!', 1.5); Snd.lap(); }
   else if (r.isPlayer && r.lap > 1) { toast('VOLTA ' + r.lap + '/' + LAPS); Snd.lap(); }
 }
 
 function collideKarts() {
   for (let a = 0; a < racers.length; a++) for (let b = a + 1; b < racers.length; b++) {
-    const A = racers[a], B = racers[b], dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz);
-    if (d < 2.8 && d > .01) { if ((A.isPlayer || B.isPlayer) && Math.abs(A.v - B.v) > 4) Snd.bump(); const p = (2.8 - d) / 2, ux = dx / d, uz = dz / d; A.x -= ux * p; A.z -= uz * p; B.x += ux * p; B.z += uz * p; }
+    const A = racers[a], B = racers[b];
+    if (A.isRemote && B.isRemote) continue;
+    const dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz);
+    if (d < 2.8 && d > .01) {
+      if ((A.isPlayer || B.isPlayer) && Math.abs(A.v - B.v) > 4) Snd.bump();
+      const p = (2.8 - d) / 2, ux = dx / d, uz = dz / d;
+      if (A.isRemote) { B.x += ux * p * 2; B.z += uz * p * 2; }
+      else if (B.isRemote) { A.x -= ux * p * 2; A.z -= uz * p * 2; }
+      else { A.x -= ux * p; A.z -= uz * p; B.x += ux * p; B.z += uz * p; }
+    }
   }
 }
 
@@ -790,8 +880,8 @@ function updateWorld(dt, t) {
   });
   for (let k = hazards.length - 1; k >= 0; k--) {
     const hz = hazards[k]; hz.t += dt; hz.m.rotation.y += dt;
-    const victim = racers.find(r => (r !== hz.owner || hz.t > 1) && Math.abs(r.x - hz.x) < 1.9 && Math.abs(r.z - hz.z) < 1.9);
-    if (victim) { hit(victim, 1.2); world.remove(hz.m); hz.m.geometry.dispose(); hazards.splice(k, 1); }
+    const victim = racers.find(r => !r.isRemote && (r !== hz.owner || hz.t > 1) && Math.abs(r.x - hz.x) < 1.9 && Math.abs(r.z - hz.z) < 1.9);
+    if (victim) { hit(victim, 1.2); world.remove(hz.m); hz.m.geometry.dispose(); hazards.splice(k, 1); if (net.on) send({ t: 'hzGone', hid: hz.hid }); }
   }
   for (let k = missiles.length - 1; k >= 0; k--) {
     const m = missiles[k]; m.life -= dt;
@@ -800,7 +890,8 @@ function updateWorld(dt, t) {
     m.g.position.set(m.x, 1.2 + Math.sin(t * 20) * .1, m.z); m.g.rotation.y = m.h;
     let done = m.life <= 0;
     const victim = racers.find(r => r !== m.owner && Math.abs(r.x - m.x) < 2.3 && Math.abs(r.z - m.z) < 2.3);
-    if (victim) { hit(victim, 1.6); done = true; }
+    if (victim && victim.isRemote) done = true;
+    else if (victim) { hit(victim, 1.6); done = true; if (net.on) send({ t: 'msGone', mid: m.mid }); }
     if (done) { world.remove(m.g); m.g.traverse(o => o.geometry && o.geometry.dispose()); missiles.splice(k, 1); }
   }
 }
@@ -840,15 +931,19 @@ function updateHud() {
 function showResult() {
   state = 'result'; Snd.engineStop();
   const order = racers.slice().sort((a, b) => (a.finished && b.finished) ? a.place - b.place : a.finished ? -1 : b.finished ? 1 : b.prog - a.prog);
-  const place = order.indexOf(player) + 1, prize = PRIZE[place - 1];
+  const place = order.indexOf(player) + 1, prize = PRIZE[place - 1] || 10;
   save.coins += prize; if (place === 1) save.wins++;
   if (!save.best[curTrack] || place < save.best[curTrack]) save.best[curTrack] = place;
   let unlockMsg = '';
-  if (place <= 3 && curTrack + 2 > save.unlocked && curTrack < 4) { save.unlocked = curTrack + 2; unlockMsg = '<br>🔓 Nova pista liberada: ' + TRACKS[curTrack + 1].name + '!'; }
+  if (!net.on && place <= 3 && curTrack + 2 > save.unlocked && curTrack < 4) { save.unlocked = curTrack + 2; unlockMsg = '<br>🔓 Nova pista liberada: ' + TRACKS[curTrack + 1].name + '!'; }
   persist();
+  const tag = player.finishMs ? '⏱️ ' + fmtMs(player.finishMs) : '';
+  $('resOnline').textContent = net.on ? 'Próxima votação em alguns segundos...' : '';
+  $('resBtns').style.display = net.on ? 'none' : '';
+  if (player.finishMs) submitResult(curTrack, player.finishMs, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE PESSOAL: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde nesta pista: ' + fmtMs(d.best_ms); });
   $('resTitle').textContent = place === 1 ? '🏆 VOCÊ VENCEU!' : place <= 3 ? 'PÓDIO! ' + place + 'º LUGAR' : place + 'º LUGAR';
-  $('resList').innerHTML = order.map((r, k) => `<div class="${r.isPlayer ? 'me' : ''}">${k + 1}º ${r.name}</div>`).join('');
-  $('resCoins').innerHTML = '+' + prize + ' 🪙' + unlockMsg;
+  $('resList').innerHTML = order.map((r, k) => `<div class="${r.isPlayer ? 'me' : ''}">${k + 1}º ${esc(r.name)}${net.on && net.finishes[r.id] ? ' <small>' + fmtMs(net.finishes[r.id]) + '</small>' : ''}</div>`).join('');
+  $('resCoins').innerHTML = tag + ' · +' + prize + ' 🪙' + (net.on ? '' : unlockMsg);
   showScreen('result');
 }
 
@@ -887,10 +982,18 @@ $('garageBtn').onclick = () => { renderGarage(); showScreen('garage'); };
 $('garBack').onclick = goMenu;
 $('selBack').onclick = goMenu;
 $('fsHud').onclick = () => isFS() ? exitFS() : enterFS();
-$('pauseBtn').onclick = () => { if (state === 'race' || state === 'count') { state = 'pause'; Snd.engineStop(); showScreen('paused'); } };
-$('resume').onclick = () => { state = countT > 0 ? 'count' : 'race'; showScreen(null); Snd.engineStart(); };
+function doPause() {
+  if (state !== 'race' && state !== 'count') return;
+  Object.keys(input).forEach(k => input[k] = false);
+  $('restart').style.display = net.on ? 'none' : '';
+  $('quit').textContent = net.on ? 'SAIR DA SALA' : 'SAIR';
+  if (net.on) { showScreen('paused'); return; } // online: a corrida continua
+  state = 'pause'; Snd.engineStop(); showScreen('paused');
+}
+$('pauseBtn').onclick = doPause;
+$('resume').onclick = () => { if (net.on) { showScreen(null); return; } state = countT > 0 ? 'count' : 'race'; showScreen(null); Snd.engineStart(); };
 $('restart').onclick = () => { Snd.engineStop(); startRace(curTrack); };
-$('quit').onclick = () => { Snd.engineStop(); buildTrack(curTrack); goMenu(); };
+$('quit').onclick = () => { if (net.on) { leaveRoom(false); return; } Snd.engineStop(); buildTrack(curTrack); goMenu(); };
 $('resNext').onclick = goSelect;
 $('resGarage').onclick = () => { renderGarage(); showScreen('garage'); };
 
@@ -908,9 +1011,11 @@ $('itemBtn').addEventListener('pointerdown', e => { e.preventDefault(); if (stat
 const KEYMAP = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'gas', w: 'gas', arrowdown: 'brake', s: 'brake' };
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
-  if (KEYMAP[k]) input[KEYMAP[k]] = true;
-  if (k === ' ' && state === 'race' && player && player.item) useItem(player);
-  if (k === 'f') isFS() ? exitFS() : enterFS();
+  if (KEYMAP[k] && document.activeElement.tagName !== 'INPUT') input[KEYMAP[k]] = true;
+  if ((k === ' ' || k === 'e') && document.activeElement.tagName !== 'INPUT' && state === 'race' && player && player.item) { e.preventDefault(); useItem(player); }
+  if (k === 'p' || k === 'escape') doPause();
+  if (k === 'enter' && $('nameScr').classList.contains('on')) $('nameOk').click();
+  if (k === 'f' && document.activeElement.tagName !== 'INPUT') isFS() ? exitFS() : enterFS();
 });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYMAP[k]) input[KEYMAP[k]] = false; });
 
@@ -928,7 +1033,8 @@ function loop(now) {
       if (countT <= .5) state = 'race';
     } else if (countT > -0.6) { countT -= dt; $('count').textContent = countT > -0.5 ? 'JÁ!' : ''; }
     const go = state === 'race';
-    racers.forEach(r => updateRacer(r, dt, go));
+    if (go) raceTime += dt;
+    racers.forEach(r => r.isRemote ? updateRemote(r, dt) : updateRacer(r, dt, go));
     collideKarts(); updateWorld(dt, t); updateCamera(dt);
     if (player.rolling > 0) {
       player.rolling -= dt; tickT -= dt; if (tickT <= 0) { tickT = .08; Snd.tick(); }
@@ -951,12 +1057,372 @@ function loop(now) {
     camera.lookAt(center.x, 0, center.z);
     updateWorld(dt, t);
   }
+  netLoop(dt);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').style.opacity = 0; }
   renderer.render(scene, camera);
 }
 
+// ============ PERFIL, RECORDES (servidor Supabase) ============
+const SB_URL = 'https://gdehjvqwrsksthdedahu.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkZWhqdnF3cnNrc3RoZGVkYWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2MTcwMDAsImV4cCI6MjExMDE5MzAwMH0.DkUmbVi1LRzIA71TZfuT0xXK7zuWMtHBuxduCBR9f4s';
+let sb = null;
+try { sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false }, realtime: { params: { eventsPerSecond: 40 } } }); } catch (e) {}
+if (!save.token) { const a = new Uint8Array(16); crypto.getRandomValues(a); save.token = [...a].map(b => b.toString(16).padStart(2, '0')).join(''); persist(); }
+const fmtMs = ms => { const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, c = Math.floor(ms / 10) % 100; return m + ':' + String(s).padStart(2, '0') + '.' + String(c).padStart(2, '0'); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
+
+function showMeName() { $('meName').textContent = save.name || '—'; }
+function goName() { $('nameIn').value = save.name || ''; $('nameMsg').textContent = ''; showScreen('nameScr'); }
+$('nameIn').addEventListener('input', () => { const v = $('nameIn').value.replace(/[^A-Za-z0-9_]/g, ''); if (v !== $('nameIn').value) $('nameIn').value = v; });
+$('nameOk').onclick = async () => {
+  const n = $('nameIn').value.trim();
+  if (!NAME_RE.test(n)) { $('nameMsg').textContent = 'Use de 3 a 16 letras, números ou _ (sem espaço).'; return; }
+  if (!sb) { $('nameMsg').textContent = 'Sem conexão com o servidor. Tente de novo.'; return; }
+  $('nameMsg').textContent = 'Registrando...';
+  const { data, error } = await sb.rpc('register_player', { p_name: n, p_token: save.token });
+  if (error || !data) { $('nameMsg').textContent = 'Sem conexão. Confira a internet e tente de novo.'; return; }
+  if (!data.ok) { $('nameMsg').textContent = data.error === 'taken' ? 'Esse nome já tem dono. Escolha outro!' : 'Nome inválido.'; return; }
+  save.name = data.name; persist(); showMeName(); Snd.click(); goMenu();
+};
+$('changeName').onclick = goName;
+
+async function submitResult(track, ms, place) {
+  if (!sb || !save.name || !ms) return null;
+  try { const { data } = await sb.rpc('submit_result', { p_name: save.name, p_token: save.token, p_track: track, p_ms: ms, p_place: place }); return data; } catch (e) { return null; }
+}
+async function renderRecords(tab) {
+  $('recTabs').innerHTML = TRACKS.map((t, i) => `<button class="btn s ${tab === i ? 'y' : 'b'}" data-t="${i}">${t.emoji}</button>`).join('') + `<button class="btn s ${tab === 'w' ? 'y' : 'b'}" data-t="w">🏆</button>`;
+  $('recTabs').querySelectorAll('button').forEach(b => b.onclick = () => renderRecords(b.dataset.t === 'w' ? 'w' : +b.dataset.t));
+  $('recTitle').textContent = tab === 'w' ? 'MAIS VITÓRIAS' : 'MELHOR TEMPO: ' + TRACKS[tab].name.toUpperCase();
+  $('recList').innerHTML = 'Carregando...';
+  if (!sb) { $('recList').innerHTML = 'Sem conexão.'; return; }
+  const { data, error } = tab === 'w' ? await sb.rpc('top_wins') : await sb.rpc('leaderboard', { p_track: tab });
+  if (error) { $('recList').innerHTML = 'Sem conexão.'; return; }
+  if (!data || !data.length) { $('recList').innerHTML = 'Ninguém correu ainda. Seja o primeiro!'; return; }
+  const me = (save.name || '').toLowerCase();
+  $('recList').innerHTML = data.map((r, k) => `<div class="${r.name.toLowerCase() === me ? 'me' : ''}">${['🥇', '🥈', '🥉'][k] || (k + 1) + 'º'} ${esc(r.name)} — ${tab === 'w' ? r.wins + ' vitórias' : fmtMs(r.best_ms)}</div>`).join('');
+}
+$('recBtn').onclick = () => { showScreen('records'); renderRecords(curTrack); };
+$('recBack').onclick = goMenu;
+
+// ============ ONLINE: SALAS COM CÓDIGO DE 8 DÍGITOS ============
+const net = { on: false, players: new Map(), order: [], peers: new Map() };
+const myId = () => (save.name || '').toLowerCase();
+const isHost = () => net.on && net.host === myId();
+const nameOf = id => (net.players.get(id) || {}).name || id;
+let netSeq = 0, stT = 0, netTick = 0;
+function send(o) { if (net.ch) net.ch.send({ type: 'broadcast', event: 'm', payload: o }); }
+function genCode() { let s = '' + (1 + Math.floor(Math.random() * 9)); for (let i = 0; i < 7; i++) s += Math.floor(Math.random() * 10); return s; }
+
+$('onlineBtn').onclick = () => { if (!save.name) { goName(); return; } $('onMsg').textContent = ''; $('codeIn').value = ''; showScreen('online'); };
+$('onBack').onclick = goMenu;
+$('codeIn').addEventListener('input', () => { $('codeIn').value = $('codeIn').value.replace(/\D/g, '').slice(0, 8); });
+$('createRoom').onclick = async () => { $('onMsg').textContent = 'Criando sala...'; if (await openRoom(genCode(), true)) { net.synced = true; showScreen('room'); renderRoom(); } };
+$('joinRoom').onclick = async () => {
+  const c = $('codeIn').value; if (!/^\d{8}$/.test(c)) { $('onMsg').textContent = 'O código tem 8 números.'; return; }
+  $('onMsg').textContent = 'Procurando a sala...';
+  if (await openRoom(c, false)) { showScreen('room'); renderRoom(); }
+};
+
+function openRoom(code, creating) {
+  if (!sb) { $('onMsg').textContent = 'Sem conexão com o servidor.'; return Promise.resolve(false); }
+  leaveRoom(true);
+  Object.assign(net, { on: true, code, phase: 'lobby', players: new Map(), order: [], host: null, votes: {}, voteEnd: 0, voteDone: false, track: 0, raceId: 0,
+    participants: [], finishes: {}, live: {}, joinedAt: Date.now(), firstFinishAt: 0, endSent: false, resultsAt: 0, synced: false, spectating: false,
+    voice: false, micOn: true, peers: new Map(), early: {} });
+  const ch = sb.channel('kart-room-' + code, { config: { broadcast: { self: false }, presence: { key: myId() } } });
+  net.ch = ch;
+  ch.on('presence', { event: 'sync' }, onPresence);
+  ch.on('broadcast', { event: 'm' }, ({ payload }) => { try { onNet(payload); } catch (e) { console.warn(e); } });
+  return new Promise(res => {
+    let done = false;
+    ch.subscribe(async st => {
+      if (st === 'SUBSCRIBED' && !done) {
+        done = true; await trackMe();
+        if (creating) return res(true);
+        setTimeout(() => {
+          if ([...net.players.keys()].some(k => k !== myId())) res(true);
+          else { leaveRoom(true); $('onMsg').textContent = 'Sala não encontrada. Confira o código.'; showScreen('online'); res(false); }
+        }, 2500);
+      } else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') && !done) { done = true; $('onMsg').textContent = 'Não consegui conectar. Tente de novo.'; res(false); }
+    });
+  });
+}
+function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, voice: net.voice }) : null; }
+
+function leaveRoom(silent) {
+  voiceOff(true);
+  if (net.ch) { try { net.ch.untrack(); sb.removeChannel(net.ch); } catch (e) {} }
+  net.ch = null; net.on = false;
+  if (!silent) { Snd.engineStop(); state = 'menu'; buildTrack(curTrack); goMenu(); }
+}
+$('leaveRoom').onclick = () => leaveRoom(false);
+$('copyCode').onclick = async () => { try { await navigator.clipboard.writeText(net.code); $('copyCode').textContent = '✔ Copiado'; setTimeout(() => $('copyCode').textContent = '📋 Copiar', 1500); } catch (e) {} };
+$('startVote').onclick = () => { if (isHost() && net.phase === 'lobby') startVote(); };
+
+function onPresence() {
+  const st = net.ch.presenceState(), prev = net.players, m = new Map();
+  for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, voice: !!meta.voice }); }
+  net.players = m;
+  net.order = [...m.values()].sort((a, b) => a.joinedAt - b.joinedAt || (a.id < b.id ? -1 : 1)).map(p => p.id);
+  net.host = net.order[0];
+  const joined = [...m.keys()].filter(k => !prev.has(k) && k !== myId());
+  [...prev.keys()].filter(k => !m.has(k)).forEach(k => { removeRemote(k); closePeer(k); });
+  if (isHost() && joined.length) sendSync();
+  voiceReconcile(); renderRoom();
+  if (net.phase === 'race' && isHost()) checkRaceEnd();
+}
+function sendSync() {
+  send({ t: 'sync', phase: net.phase, track: net.track, raceId: net.raceId, participants: net.participants,
+    voteLeft: Math.max(0, net.voteEnd - performance.now()), votes: net.votes, finishes: net.finishes });
+}
+
+function onNet(p) {
+  if (!net.on) return;
+  switch (p.t) {
+    case 'sync':
+      if (net.synced || isHost()) return; net.synced = true;
+      net.track = p.track; net.raceId = p.raceId; net.participants = p.participants || []; net.finishes = p.finishes || {};
+      if (p.phase === 'vote') enterVote(p.voteLeft, p.votes);
+      else { net.phase = p.phase; net.spectating = p.phase === 'race'; renderRoom(); }
+      break;
+    case 'voteStart': enterVote(p.dur * 1000, {}); break;
+    case 'vote': net.votes[p.id] = p.track; renderVote(); break;
+    case 'start': startOnline(p); break;
+    case 'st': {
+      if (p.rid !== net.raceId) return;
+      net.live[p.id] = p;
+      const r = racers.find(o => o.isRemote && o.id === p.id);
+      if (r) { r.net = { x: p.x, z: p.z, h: p.h, v: p.v, sp: p.sp, sl: p.sl, b: p.b, t: performance.now() }; r.lap = p.lap; r.idx = p.idx; r.prog = p.lap * N + p.idx - N; }
+      if (net.spectating) renderRoom();
+      break;
+    }
+    case 'fin': {
+      if (p.rid !== net.raceId) return;
+      net.finishes[p.id] = p.ms; if (!net.firstFinishAt) net.firstFinishAt = performance.now();
+      const r = racers.find(o => o.id === p.id); if (r) { r.finished = true; }
+      updatePlaces(); if (isHost()) checkRaceEnd(); if (net.spectating) renderRoom();
+      break;
+    }
+    case 'end': if (p.rid === net.raceId) endOnline(); break;
+    case 'banana': if (state === 'race' || state === 'count') spawnBanana(p.x, p.z, racers.find(o => o.id === p.owner) || null, p.hid); break;
+    case 'hzGone': { const k = hazards.findIndex(h => h.hid === p.hid); if (k >= 0) { world.remove(hazards[k].m); hazards.splice(k, 1); } break; }
+    case 'missile': if (state === 'race' || state === 'count') spawnMissile(p.x, p.z, p.h, racers.find(o => o.id === p.target) || null, racers.find(o => o.id === p.owner) || null, p.mid); break;
+    case 'msGone': { const k = missiles.findIndex(m => m.mid === p.mid); if (k >= 0) { world.remove(missiles[k].g); missiles.splice(k, 1); } break; }
+    case 'raio':
+      if ((state === 'race' || state === 'count') && player && !player.finished && net.participants.includes(myId())) {
+        player.slow = 3.5; player.spin = Math.max(player.spin, .6); flash(); Snd.thunder(); toast('🌩️ ' + nameOf(p.owner) + ' usou o RAIO!');
+      }
+      break;
+    case 'rtc': onRtc(p); break;
+  }
+}
+
+function startVote() { net.votes = {}; send({ t: 'voteStart', dur: 20 }); enterVote(20000, {}); }
+function enterVote(ms, votes) {
+  net.phase = 'vote'; net.votes = votes || {}; net.voteEnd = performance.now() + ms; net.voteDone = false; net.spectating = false;
+  if (state === 'race' || state === 'count') { Snd.engineStop(); state = 'menu'; }
+  showScreen('vote'); renderVote();
+}
+function renderVote() {
+  if (!$('vote').classList.contains('on')) return;
+  const counts = [0, 0, 0, 0, 0]; Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
+  const mine = net.votes[myId()];
+  $('voteTracks').innerHTML = TRACKS.map((t, i) => `<button class="tcard ${mine === i ? 'voted' : ''}" data-i="${i}"><div class="em">${t.emoji}</div><div class="nm">${t.name}</div><div class="info">${counts[i]} voto${counts[i] === 1 ? '' : 's'}</div></button>`).join('');
+  $('voteTracks').querySelectorAll('.tcard').forEach(b => b.onclick = () => { const i = +b.dataset.i; net.votes[myId()] = i; send({ t: 'vote', id: myId(), track: i }); Snd.click(); renderVote(); });
+  $('voteInfo').textContent = 'Empate? Quem entrou primeiro na sala (' + nameOf(net.order[0]) + ') decide.';
+}
+function tallyVotes() {
+  const counts = [0, 0, 0, 0, 0]; Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
+  const max = Math.max(...counts);
+  if (max === 0) { const firstVote = net.votes[net.order[0]]; return firstVote != null ? firstVote : Math.floor(Math.random() * 5); }
+  const tied = counts.map((c, i) => c === max ? i : -1).filter(i => i >= 0);
+  if (tied.length === 1) return tied[0];
+  for (const id of net.order) { const v = net.votes[id]; if (v != null && tied.includes(v)) return v; }
+  return tied[0];
+}
+function hostStartRace() {
+  net.voteDone = true;
+  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice() };
+  send(msg); startOnline(msg);
+}
+function startOnline(p) {
+  net.phase = 'race'; net.track = p.track; net.raceId = p.raceId; net.participants = p.participants;
+  net.finishes = {}; net.live = {}; net.firstFinishAt = 0; net.endSent = false; net.voteDone = true; net.synced = true;
+  if (!p.participants.includes(myId())) { net.spectating = true; showScreen('room'); renderRoom(); return; }
+  net.spectating = false;
+  toast('🏁 ' + TRACKS[p.track].name, 2);
+  startRace(p.track);
+}
+function spawnOnlineRacers(parts) {
+  racers = [];
+  const usedColors = [KART_COLORS[save.color] || COLORS[0]];
+  parts.forEach((id, k) => {
+    const i = (N - 5 - Math.floor(k / 2) * 7 + N * 2) % N, lat = k % 2 ? -4.5 : 4.5;
+    const pl = net.players.get(id) || {}, me = id === myId();
+    let color = KART_COLORS[me ? save.color : pl.color] || COLORS[k % COLORS.length];
+    if (!me && usedColors.includes(color)) color = KART_COLORS.find(c => !usedColors.includes(c)) || color;
+    usedColors.push(color);
+    const kart = makeKart(color);
+    const r = { color, id, name: me ? save.name : (pl.name || id), isPlayer: me, isRemote: !me, kart,
+      x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
+      spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0, aiOff: 0, aiOffT: 0, aiMax: 50 };
+    r.prog = r.idx - N; r.net = { x: r.x, z: r.z, h: r.h, v: 0, t: 0 };
+    racers.push(r); if (me) player = r;
+  });
+}
+function updateRemote(r, dt) {
+  const s = r.net, age = s.t ? clamp((performance.now() - s.t) / 1000, 0, .4) : 0;
+  const ex = s.x + Math.sin(s.h) * s.v * age, ez = s.z + Math.cos(s.h) * s.v * age, f = Math.min(1, dt * 10);
+  if (Math.hypot(ex - r.x, ez - r.z) > 25) { r.x = ex; r.z = ez; } else { r.x += (ex - r.x) * f; r.z += (ez - r.z) * f; }
+  r.h += wrapA(s.h - r.h) * f; r.v = s.v;
+  r.slow = s.sl ? 1 : 0; r.boost = s.b ? 1 : 0;
+  if (s.sp) r.spinA += dt * 14; else r.spinA *= .8;
+  kartVisual(r, dt, 0);
+}
+function removeRemote(id) {
+  const k = racers.findIndex(r => r.isRemote && r.id === id);
+  if (k >= 0) { world.remove(racers[k].kart.g); racers.splice(k, 1); }
+  net.participants = net.participants.filter(x => x !== id);
+}
+function updatePlaces() {
+  const fins = Object.entries(net.finishes).sort((a, b) => a[1] - b[1]).map(e => e[0]);
+  racers.forEach(r => { const k = fins.indexOf(r.id); if (k >= 0) { r.finished = true; r.place = k + 1; } });
+}
+function checkRaceEnd() {
+  if (net.endSent || net.phase !== 'race') return;
+  const active = net.participants.filter(id => net.players.has(id));
+  const all = active.length > 0 && active.every(id => net.finishes[id] != null);
+  if (all || !active.length || (net.firstFinishAt && performance.now() - net.firstFinishAt > 40000)) { net.endSent = true; send({ t: 'end', rid: net.raceId }); endOnline(); }
+}
+function endOnline() {
+  if (net.phase !== 'race') return;
+  net.phase = 'results'; net.resultsAt = performance.now();
+  if (net.spectating || !player || !net.participants.includes(myId()) && !racers.includes(player)) { net.spectating = false; showScreen('room'); renderRoom(); return; }
+  showResult();
+}
+function renderRoom() {
+  if (!net.on) return;
+  $('roomCode').textContent = net.code.slice(0, 4) + ' ' + net.code.slice(4);
+  $('roomList').innerHTML = net.order.map(id => {
+    const p = net.players.get(id), me = id === myId();
+    let st = '⏳ aguardando';
+    if (net.phase === 'race' && net.participants.includes(id)) {
+      const lv = net.live[id]; st = net.finishes[id] != null ? '🏁 chegou ' + fmtMs(net.finishes[id]) : '🏎️ correndo' + (lv ? ' · volta ' + clamp(lv.lap, 1, LAPS) + '/' + LAPS : '');
+    }
+    return `<div class="${me ? 'me' : ''}">${id === net.host ? '👑 ' : ''}${esc(p.name)}${me ? ' (você)' : ''} ${p.voice ? '🎙️' : ''} <small>${st}</small></div>`;
+  }).join('');
+  let s = '';
+  if (net.phase === 'lobby') s = isHost() ? 'Você é o dono da sala! Mande o código para os amigos e toque em COMEÇAR.' : 'Aguardando ' + nameOf(net.host) + ' começar a votação...';
+  else if (net.phase === 'race') s = 'Corrida em andamento: ' + TRACKS[net.track].name + '. Você entra na próxima!';
+  else if (net.phase === 'results') s = 'A votação da próxima pista vai começar...';
+  else if (net.phase === 'vote') s = 'Votação em andamento...';
+  $('roomStatus').textContent = s;
+  $('startVote').style.display = isHost() && net.phase === 'lobby' ? '' : 'none';
+  renderVoice();
+}
+function netLoop(dt) {
+  if (!net.on) return;
+  const now = performance.now();
+  if (net.phase === 'vote') {
+    const left = Math.max(0, Math.ceil((net.voteEnd - now) / 1000));
+    $('voteTimer').textContent = left + 's';
+    if (isHost() && !net.voteDone && now >= net.voteEnd) hostStartRace();
+  }
+  if (net.phase === 'results' && isHost() && now - net.resultsAt > 7000) startVote();
+  if (net.phase === 'race' && isHost()) { netTick += dt; if (netTick > 1) { netTick = 0; checkRaceEnd(); } }
+  if ((state === 'race' || state === 'count') && player && net.phase === 'race') {
+    stT -= dt;
+    if (stT <= 0) {
+      const n = Math.max(1, net.participants.length);
+      stT = n <= 3 ? 1 / 10 : n <= 5 ? 1 / 7 : 1 / 5;
+      send({ t: 'st', rid: net.raceId, id: myId(), x: +player.x.toFixed(2), z: +player.z.toFixed(2), h: +player.h.toFixed(3), v: +player.v.toFixed(1),
+        lap: player.lap, idx: player.idx, sp: player.spin > 0 ? 1 : 0, sl: player.slow > 0 ? 1 : 0, b: player.boost > 0 ? 1 : 0 });
+    }
+  }
+}
+
+// ============ ÁUDIO DE VOZ NA SALA (WebRTC) ============
+const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+async function voiceOn() {
+  if (!navigator.mediaDevices || !window.RTCPeerConnection) { $('roomStatus').textContent = 'Este navegador não permite áudio.'; return; }
+  try {
+    net.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  } catch (e) { $('roomStatus').textContent = '🎙️ Microfone não liberado. Permita o microfone no navegador.'; return; }
+  net.voice = true; net.micOn = true; await trackMe(); voiceReconcile(); renderVoice();
+}
+function voiceOff(skipTrack) {
+  if (!net.voice && !net.stream) return;
+  net.voice = false;
+  if (net.stream) { net.stream.getTracks().forEach(t => t.stop()); net.stream = null; }
+  [...net.peers.keys()].forEach(closePeer);
+  if (!skipTrack) trackMe();
+  renderVoice();
+}
+function voiceReconcile() {
+  if (!net.voice) return;
+  net.players.forEach(p => {
+    if (p.id === myId()) return;
+    if (p.voice && !net.peers.has(p.id) && myId() < p.id) makeOffer(p.id);
+    if (!p.voice && net.peers.has(p.id)) closePeer(p.id);
+  });
+}
+function newPeer(id) {
+  const pc = new RTCPeerConnection({ iceServers: ICE });
+  net.stream.getTracks().forEach(t => pc.addTrack(t, net.stream));
+  pc.onicecandidate = e => { if (e.candidate) send({ t: 'rtc', from: myId(), to: id, c: e.candidate.toJSON() }); };
+  pc.ontrack = e => {
+    let a = document.getElementById('aud-' + id);
+    if (!a) { a = document.createElement('audio'); a.id = 'aud-' + id; a.autoplay = true; a.setAttribute('playsinline', ''); $('audios').appendChild(a); }
+    a.srcObject = e.streams[0]; a.play().catch(() => {});
+  };
+  pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') closePeer(id); };
+  const P = { pc, pending: net.early[id] || [] }; delete net.early[id];
+  net.peers.set(id, P); return P;
+}
+async function makeOffer(id) {
+  const P = newPeer(id);
+  const o = await P.pc.createOffer(); await P.pc.setLocalDescription(o);
+  send({ t: 'rtc', from: myId(), to: id, sdp: P.pc.localDescription.toJSON() });
+}
+async function onRtc(p) {
+  if (p.to !== myId() || !net.voice) return;
+  let P = net.peers.get(p.from);
+  if (p.sdp) {
+    if (p.sdp.type === 'offer') {
+      if (P) closePeer(p.from);
+      P = newPeer(p.from);
+      await P.pc.setRemoteDescription(p.sdp);
+      const a = await P.pc.createAnswer(); await P.pc.setLocalDescription(a);
+      send({ t: 'rtc', from: myId(), to: p.from, sdp: P.pc.localDescription.toJSON() });
+    } else if (P) await P.pc.setRemoteDescription(p.sdp);
+    if (P) { for (const c of P.pending) { try { await P.pc.addIceCandidate(c); } catch (e) {} } P.pending = []; }
+  } else if (p.c) {
+    if (!P) (net.early[p.from] = net.early[p.from] || []).push(p.c);
+    else if (P.pc.remoteDescription) { try { await P.pc.addIceCandidate(p.c); } catch (e) {} }
+    else P.pending.push(p.c);
+  }
+}
+function closePeer(id) {
+  const P = net.peers.get(id); if (P) { try { P.pc.close(); } catch (e) {} net.peers.delete(id); }
+  const a = document.getElementById('aud-' + id); if (a) a.remove();
+}
+function toggleMic() { net.micOn = !net.micOn; if (net.stream) net.stream.getAudioTracks().forEach(t => t.enabled = net.micOn); renderVoice(); }
+function renderVoice() {
+  $('voiceBtn').textContent = net.voice ? '🔇 Desligar áudio da sala' : '🎙️ Ligar áudio da sala';
+  $('micBtn').style.display = net.voice ? '' : 'none';
+  $('micBtn').textContent = net.micOn ? '🎙️ Microfone ligado' : '🤐 Microfone mutado';
+  $('hudMic').style.display = net.on && net.voice ? '' : 'none';
+  $('hudMic').textContent = net.micOn ? '🎙️' : '🤐';
+}
+$('voiceBtn').onclick = () => net.voice ? voiceOff() : voiceOn();
+$('micBtn').onclick = toggleMic;
+$('hudMic').onclick = toggleMic;
+
 buildTrack(0);
-showScreen('menu');
+showMeName();
+if (save.name) showScreen('menu'); else goName();
 $('loading').remove();
 requestAnimationFrame(loop);
 })();
