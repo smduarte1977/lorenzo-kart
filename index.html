@@ -12,7 +12,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;background:#0b0b1e;color:#fff;font-family:'Lilita One',system-ui,sans-serif;
-  touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;letter-spacing:.5px}
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;overscroll-behavior:none;letter-spacing:.5px}
+#game,#controls,#hud{touch-action:none}
 #game{position:fixed;inset:0;width:100vw;height:100dvh;display:block}
 .safe{padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
 button{font-family:inherit;color:inherit;cursor:pointer}
@@ -49,7 +50,7 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 @keyframes glow{from{box-shadow:0 0 10px 2px #ffd23f}to{box-shadow:0 0 28px 10px #ffb300,inset 0 0 14px #fff}}
 
 /* ---------- Telas ---------- */
-.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:safe center;gap:14px;text-align:center;overflow-y:auto;touch-action:pan-y;padding:12px 0;
   background:linear-gradient(180deg,rgba(10,10,40,.55),rgba(10,10,40,.85))}
 .screen.on{display:flex}
 h1{font-size:clamp(34px,11vh,80px);color:#ffd23f;text-shadow:0 6px 0 #b3003c,0 0 24px #ff7b00;line-height:1}
@@ -85,6 +86,13 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .sw{width:38px;height:38px;border-radius:50%;border:3px solid rgba(255,255,255,.3)}
+.pl{min-width:64px;padding:4px 6px;border-radius:12px;border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);font-size:11px;font-family:system-ui;display:flex;flex-direction:column;align-items:center}
+.pl span{font-size:26px}
+.pl.sel{border-color:#ffd23f;background:rgba(255,210,63,.25)}
+#emoBar{position:absolute;top:60px;right:0;display:none;gap:6px;pointer-events:auto}
+#emoBar.on{display:flex}
+#emoBar button,.emob{font-size:24px;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.4);border-radius:12px;width:46px;height:46px}
+#emoFeed{position:absolute;top:40%;left:14px;font-size:16px;font-family:system-ui;text-shadow:0 2px 0 #000;display:flex;flex-direction:column;gap:4px}
 .sw.sel{border:4px solid #fff;box-shadow:0 0 12px #fff}
 .btn.s{padding:8px 14px;font-size:clamp(12px,3vh,16px)}
 .inp{font-family:inherit;font-size:clamp(18px,4.5vh,26px);padding:10px 14px;border-radius:12px;border:3px solid #7cc8ff;background:rgba(0,0,0,.4);color:#fff;text-align:center;width:min(360px,80vw);outline:none}
@@ -97,6 +105,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 .tcard.voted{border-color:#ffd23f;background:rgba(255,210,63,.25)}
 .klabel{font-size:11px;font-family:system-ui;color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:1px 6px}
 .scroll{max-height:42vh;overflow-y:auto;touch-action:pan-y}
+@media (max-height:480px){.screen{gap:8px}.up{padding:3px 10px}.up .btn{padding:5px 10px}h2{font-size:clamp(20px,6vh,30px)}.pl span{font-size:20px}.sw{width:30px;height:30px}.pl{min-width:56px}}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0b1e;font-size:24px;z-index:60}
 </style>
 </head>
@@ -108,10 +117,12 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div id="hud">
   <div id="hudTL" class="safe"><div id="pos">1<small>º/6</small></div><div id="lap">VOLTA 1/3</div><div id="spd">0 km/h</div></div>
   <div id="hudTR" class="safe">
-    <div class="hbtns"><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">⏸</button><button class="icon-btn" id="exitBtn">✕</button><button class="icon-btn" id="fsHud">⛶</button></div>
+    <div class="hbtns"><button class="icon-btn" id="hudEmo" style="display:none">😀</button><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">⏸</button><button class="icon-btn" id="exitBtn">✕</button><button class="icon-btn" id="fsHud">⛶</button></div>
+    <div id="emoBar"></div>
     <canvas id="mini" width="260" height="200"></canvas>
   </div>
   <div id="toast"></div>
+  <div id="emoFeed"></div>
   <div id="count"></div>
 </div>
 
@@ -144,13 +155,14 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div class="screen" id="select">
   <h2>ESCOLHA A PISTA</h2>
   <div class="tracks" id="tracks"></div>
-  <div class="row"><button class="btn g" id="selBack">VOLTAR</button></div>
+  <div class="row" style="align-items:center"><span class="sub">VOLTAS:</span><button class="btn s b lapMinus">−</button><span class="coins lapVal">3</span><button class="btn s b lapPlus">+</button><button class="btn g" id="selBack">VOLTAR</button></div>
 </div>
 
 <!-- Garagem -->
 <div class="screen" id="garage">
   <h2>🔧 GARAGEM</h2>
   <div class="coins">🪙 <span class="cn">0</span></div>
+  <div class="row" style="align-items:center"><canvas id="pilotPrev" width="220" height="150" style="width:150px;height:102px"></canvas><div><div class="sub">🧑 Piloto</div><div class="swatches" id="pilots" style="max-width:520px"></div></div></div>
   <div class="sub">🎨 Cor do kart</div>
   <div class="swatches" id="swatches"></div>
   <div class="ups" id="ups"></div>
@@ -213,6 +225,8 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <div class="sub">CÓDIGO DA SALA</div>
   <div class="row" style="align-items:center"><div class="code" id="roomCode"></div><button class="btn s b" id="copyCode">📋 Copiar</button></div>
   <div class="res scroll" id="roomList"></div>
+  <div class="row" style="align-items:center" id="roomLapsRow"><span class="sub">VOLTAS:</span><button class="btn s b lapMinus hostOnly">−</button><span class="coins lapVal" id="roomLaps">3</span><button class="btn s b lapPlus hostOnly">+</button></div>
+  <div class="row" id="emoRow"></div>
   <div class="sub" id="roomStatus"></div>
   <div class="row"><button class="btn s b" id="voiceBtn"></button><button class="btn s b" id="micBtn"></button></div>
   <div class="row"><button class="btn" id="startVote">▶ COMEÇAR</button><button class="btn g" id="leaveRoom">SAIR DA SALA</button></div>
@@ -242,7 +256,7 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ============ SALVAMENTO ============
 const SAVE_KEY = 'lorenzoKart_v1';
-let save = { coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [0, 0, 0, 0, 0], color: 0, music: 1, sfx: true };
+let save = { coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [], color: 0, music: 1, sfx: true, pilot: 'menino', laps: 3 };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object.assign(save, s); } catch (e) {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
 
@@ -364,6 +378,8 @@ const Snd = (() => {
     boost: () => tone(220, .5, 'sawtooth', .2, 900),
     whoosh: () => burst(.35, 'bandpass', 1400, .5, 0, 0, 2),
     banana: () => tone(500, .15, 'sine', .25, 250),
+    shield: () => [523, 784, 1047].forEach((f, i) => tone(f, .25, 'sine', .18, 0, 0, ac && ac.currentTime + i * .05)),
+    boom: () => { burst(.6, 'lowpass', 300, 1.2); tone(80, .4, 'sine', .5, 30); },
     missile: () => { tone(300, .4, 'sawtooth', .15, 120); burst(.4, 'bandpass', 800, .5); },
     thunder: () => { burst(1.2, 'lowpass', 400, 1.2); tone(90, .8, 'sawtooth', .2, 40); },
     hit: () => { tone(700, .6, 'square', .2, 120); burst(.3, 'lowpass', 900, .6); },
@@ -388,19 +404,37 @@ const TRACKS = [
     pts: [[0,0],[200,-20],[260,80],[180,140],[220,240],[100,280],[0,200],[-80,260],[-180,180],[-120,80],[-160,0],[-80,-40]] },
   { name: 'Pico Nevado', emoji: '❄️', sky: 0xbfe0ff, fog: 0xeaf4ff, ground: '#f4f8ff', ground2: '#d8e4f2', road: '#50586a', curbA: '#1e88e5', curbB: '#ffffff', deco: 'pine', mount: 0xdfe9ff, hemiG: 0x8899aa, light: .95,
     pts: [[0,0],[120,-60],[240,-20],[280,100],[200,180],[240,280],[120,320],[40,240],[-60,300],[-160,240],[-140,120],[-60,80]] },
-  { name: 'Vulcão Furioso', emoji: '🌋', sky: 0x5a2626, fog: 0x6e3024, ground: '#3a2a28', ground2: '#241a18', road: '#2b2b30', curbA: '#ff3d00', curbB: '#ffd180', deco: 'rock', mount: 0x2a1a18, hemiG: 0x441111, light: .7,
+  { name: 'Vulcão Furioso', emoji: '🌋', sky: 0x5a2626, fog: 0x6e3024, ground: '#3a2a28', ground2: '#241a18', road: '#2b2b30', curbA: '#ff3d00', curbB: '#ffd180', deco: 'rock', volcano: true, mount: 0x2a1a18, hemiG: 0x441111, light: .7,
     pts: [[0,0],[180,0],[260,100],[180,200],[60,160],[0,240],[-120,260],[-220,160],[-160,60],[-200,-40],[-100,-80]] },
   { name: 'Galáxia Neon', emoji: '🌌', sky: 0x0a0620, fog: 0x140a34, ground: '#140c2e', ground2: '#22144a', road: '#1a1a2e', curbA: '#ff00e5', curbB: '#00e5ff', deco: 'neon', mount: 0x2a1a5a, hemiG: 0x221144, light: .6,
     pts: [[0,0],[160,40],[300,0],[340,140],[240,240],[300,340],[140,380],[60,280],[-80,360],[-200,280],[-140,160],[-240,80],[-160,-40]] },
+  { name: 'Praia Tropical', emoji: '🏝️', sky: 0x7fd8ff, fog: 0xc8f0ff, ground: '#f3d98b', ground2: '#e6c76f', road: '#5b5b66', curbA: '#00bcd4', curbB: '#ffffff', deco: 'palm', mount: 0x2ab5c9, hemiG: 0x998855, light: 1.05, shape: [230, 3, .28, .4, 1.25, .9] },
+  { name: 'Cidade Noturna', emoji: '🌃', sky: 0x101830, fog: 0x1a2440, ground: '#2b2f3a', ground2: '#353a47', road: '#22232b', curbA: '#ffd23f', curbB: '#222222', deco: 'city', mount: 0x1c2238, hemiG: 0x222233, light: .65, stars: true, shape: [240, 4, .22, 0, 1.1, 1] },
+  { name: 'Terra dos Doces', emoji: '🍭', sky: 0xffd1f0, fog: 0xffe6f7, ground: '#ffb3d9', ground2: '#ff9ecb', road: '#7b4a3a', curbA: '#ff4fa3', curbB: '#ffffff', deco: 'candy', mount: 0xff8cc6, hemiG: 0xcc6699, light: 1.05, shape: [210, 5, .2, .3, 1, 1.15] },
+  { name: 'Floresta de Outono', emoji: '🍂', sky: 0xffcc99, fog: 0xffe0bf, ground: '#b5762f', ground2: '#9c5f22', road: '#4f4a48', curbA: '#d84315', curbB: '#fff3e0', deco: 'tree', treeColors: [0xe65100, 0xff8f00, 0xffb300, 0xc62828], mount: 0xa0522d, hemiG: 0x885522, light: 1, shape: [250, 2, .3, .9, 1.2, 1] },
+  { name: 'Selva Amazônica', emoji: '🦜', sky: 0x9be7c4, fog: 0xc9f2dd, ground: '#2e7d32', ground2: '#1b5e20', road: '#4e4a42', curbA: '#ffeb3b', curbB: '#1b5e20', deco: 'tree', treeColors: [0x1b5e20, 0x2e7d32, 0x388e3c, 0x00695c], treeScale: 1.5, mount: 0x2e6b3a, hemiG: 0x335533, light: .9, shape: [260, 3, .32, 1.7, 1, 1.2] },
+  { name: 'Cratera Lunar', emoji: '🌙', sky: 0x05050f, fog: 0x0c0c1a, ground: '#9e9e9e', ground2: '#7d7d7d', road: '#3a3a44', curbA: '#ffffff', curbB: '#607d8b', deco: 'rock', rockColors: [0x8d8d8d, 0x6f6f6f, 0xbdbdbd], mount: 0x555566, hemiG: 0x444455, light: .8, stars: true, shape: [235, 4, .26, .7, 1, 1] },
+  { name: 'Reino dos Cogumelos', emoji: '🍄', sky: 0xb3e5fc, fog: 0xdff4ff, ground: '#7cb342', ground2: '#689f38', road: '#5d4e45', curbA: '#e53935', curbB: '#ffffff', deco: 'mushroom', mount: 0x6a9f4a, hemiG: 0x557733, light: 1, shape: [225, 3, .3, 2.4, 1.15, 1.15] },
+  { name: 'Caverna de Cristal', emoji: '💎', sky: 0x1a1033, fog: 0x2a1a4a, ground: '#2a2044', ground2: '#3a2c5c', road: '#24203a', curbA: '#e040fb', curbB: '#40c4ff', deco: 'crystal', mount: 0x3a2a6a, hemiG: 0x332255, light: .6, shape: [245, 5, .18, 1.1, 1.2, .95] },
+  { name: 'Jardim das Cerejeiras', emoji: '🌸', sky: 0xffe4ef, fog: 0xfff0f6, ground: '#a5d6a7', ground2: '#81c784', road: '#5a5560', curbA: '#ff80ab', curbB: '#ffffff', deco: 'tree', treeColors: [0xffb7d5, 0xff8fbf, 0xffd1e3, 0xf8bbd0], mount: 0xc58aa6, hemiG: 0x778866, light: 1.05, shape: [240, 2, .34, 2.0, 1.3, .95] },
+  { name: 'Arco-Íris Final', emoji: '🌈', sky: 0x9fd8ff, fog: 0xe1f3ff, ground: '#ffffff', ground2: '#e8f4ff', road: '#3d3d5c', curbA: '#ff1744', curbB: '#ffea00', deco: 'neon', mount: 0xb39ddb, hemiG: 0x9999cc, light: 1, rainbow: true, shape: [270, 4, .3, 2.8, 1.15, 1.1] },
 ];
+function shapePts(sh) {
+  const [Rr, k, a, ph, sx, sz] = sh, n = 18, out = [];
+  for (let i = 0; i < n; i++) { const t = i / n * TAU, r = Rr * (1 + a * Math.sin(k * t + ph) + .08 * Math.sin((k + 2) * t)); out.push([Math.cos(t) * r * sx, Math.sin(t) * r * sz]); }
+  return out;
+}
+TRACKS.forEach(t => { if (!t.pts) t.pts = shapePts(t.shape); });
 const DEMO = location.hash === '#demo';
-const SC = 1.15, ROAD_W = 20, LAPS = 3;
+const SC = 1.15, ROAD_W = 20;
+let LAPS = 3;
 const KART_COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00, 0xff4fa3, 0x00bcd4, 0xf5f5f5, 0x333333];
 const NAMES = ['Você', 'Rex', 'Luna', 'Faísca', 'Zé', 'Bia'];
 const COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00];
 const PRIZE = [150, 100, 70, 50, 30, 20];
-const ICON = { turbo: '⚡', banana: '🍌', missil: '🚀', raio: '🌩️' };
-const ITEM_NAME = { turbo: 'TURBO!', banana: 'BANANA!', missil: 'MÍSSIL!', raio: 'RAIO!' };
+const ICON = { turbo: '⚡', banana: '🍌', missil: '🚀', raio: '🌩️', escudo: '🛡️', granada: '💣' };
+const ITEM_NAME = { turbo: 'TURBO!', banana: 'BANANA!', missil: 'MÍSSIL!', raio: 'RAIO!', escudo: 'ESCUDO!', granada: 'GRANADA!' };
+const EMOS = ['😂', '👍', '😱', '😎', '🔥', '😭'];
 
 // ============ RENDER ============
 const renderer = new THREE.WebGLRenderer({ canvas: $('game'), antialias: true, powerPreference: 'high-performance' });
@@ -435,7 +469,7 @@ function clearWorld() {
     if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
   });
   while (world.children.length) world.remove(world.children[0]);
-  blocks = []; pads = []; hazards = []; missiles = []; racers = [];
+  blocks = []; pads = []; hazards = []; missiles = []; racers = []; fx = [];
 }
 
 function stripGeo(inner, outer, y, vLen) {
@@ -498,11 +532,11 @@ function buildTrack(ti) {
     c.fillStyle = th.road; c.fillRect(0, 0, w, h);
     for (let i = 0; i < 2500; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.12)'; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
     c.fillStyle = 'rgba(255,255,255,0.85)'; c.fillRect(8, 0, 6, h); c.fillRect(w - 14, 0, 6, h);
-    c.fillStyle = ti === 4 ? '#00e5ff' : '#ffffff'; c.fillRect(w / 2 - 3, 0, 6, h * .45);
+    c.fillStyle = th.deco === 'neon' && !th.rainbow ? '#00e5ff' : '#ffffff'; c.fillRect(w / 2 - 3, 0, 6, h * .45);
   }, true);
   const road = new THREE.Mesh(stripGeo(-ROAD_W / 2, ROAD_W / 2, 0.02, ROAD_W), new THREE.MeshLambertMaterial({ map: rTex, side: THREE.DoubleSide }));
   world.add(road);
-  const cTex = canvasTex(16, 64, (c, w, h) => { c.fillStyle = th.curbA; c.fillRect(0, 0, w, h / 2); c.fillStyle = th.curbB; c.fillRect(0, h / 2, w, h / 2); }, true);
+  const cTex = canvasTex(16, 64, (c, w, h) => { if (th.rainbow) { ['#ff1744', '#ff9100', '#ffea00', '#00e676', '#2979ff', '#d500f9'].forEach((col, i) => { c.fillStyle = col; c.fillRect(0, i * h / 6, w, h / 6 + 1); }); return; } c.fillStyle = th.curbA; c.fillRect(0, 0, w, h / 2); c.fillStyle = th.curbB; c.fillRect(0, h / 2, w, h / 2); }, true);
   cTex.magFilter = THREE.NearestFilter;
   const curbMat = new THREE.MeshBasicMaterial({ map: cTex, side: THREE.DoubleSide });
   world.add(new THREE.Mesh(stripGeo(ROAD_W / 2, ROAD_W / 2 + 2, 0.04, 8), curbMat));
@@ -527,13 +561,13 @@ function buildTrack(ti) {
     const m = new THREE.Mesh(new THREE.ConeGeometry(rnd(60, 110), hgt, 6), mMat);
     m.position.set(center.x + Math.cos(a) * d, hgt / 2 - 2, center.z + Math.sin(a) * d); world.add(m);
   }
-  if (th.deco === 'rock') { // vulcão central
+  if (th.volcano) { // vulcão central
     const v = new THREE.Mesh(new THREE.ConeGeometry(70, 110, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0x2a1a18 }));
     const far = { x: center.x + radius + 160, z: center.z - radius - 120 }; v.position.set(far.x, 54, far.z); world.add(v);
     const lava = new THREE.Mesh(new THREE.CircleGeometry(16, 16), new THREE.MeshBasicMaterial({ color: 0xff5a00 }));
     lava.rotation.x = -PI / 2; lava.position.set(far.x, 108, far.z); world.add(lava);
   }
-  if (th.deco === 'neon') { // estrelas
+  if ((th.deco === 'neon' && !th.rainbow) || th.stars) { // estrelas
     const g = new THREE.BufferGeometry(), arr = [];
     for (let i = 0; i < 1500; i++) { const a = Math.random() * TAU, e = rnd(.05, 1.4), d = 900; arr.push(center.x + Math.cos(a) * Math.cos(e) * d, Math.sin(e) * d, center.z + Math.sin(a) * Math.cos(e) * d); }
     g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
@@ -584,13 +618,39 @@ function buildDeco(th) {
     tries++;
     const i = Math.floor(Math.random() * N), s = Math.random() < .5 ? -1 : 1, d = ROAD_W / 2 + rnd(17, 90);
     const x = px[i] + nx[i] * d * s, z = pz[i] + nz[i] * d * s;
-    if (distToTrack(x, z) > ROAD_W / 2 + 17) spots.push([x, z, rnd(.7, 1.5), Math.random() * TAU]);
+    if (distToTrack(x, z) > ROAD_W / 2 + 17) spots.push([x, z, rnd(.7, 1.5), Math.random() * TAU, rnd(8, 26)]);
   }
   const parts = [];
   const L = (c, opt) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, opt || {}));
+  const ts = th.treeScale || 1;
   if (th.deco === 'tree') {
-    parts.push({ geo: new THREE.CylinderGeometry(.4, .6, 3, 6), mat: L(0x7a4a26), y: 1.5 });
-    parts.push({ geo: new THREE.IcosahedronGeometry(2.8, 0), mat: L(0xffffff), y: 5, colors: [0x2e7d32, 0x43a047, 0x66bb6a, 0x9ccc65] });
+    parts.push({ geo: new THREE.CylinderGeometry(.4 * ts, .6 * ts, 3 * ts, 6), mat: L(0x7a4a26), y: 1.5 * ts });
+    parts.push({ geo: new THREE.IcosahedronGeometry(2.8 * ts, 0), mat: L(0xffffff), y: 5 * ts, colors: th.treeColors || [0x2e7d32, 0x43a047, 0x66bb6a, 0x9ccc65] });
+  } else if (th.deco === 'palm') {
+    const trunk = new THREE.CylinderGeometry(.35, .55, 8, 6); trunk.translate(0, 4, 0); trunk.rotateZ(.18);
+    parts.push({ geo: trunk, mat: L(0x9c7a4d), y: 0 });
+    const leaves = new THREE.ConeGeometry(4, 1.6, 6); leaves.translate(1.4, 8, 0);
+    parts.push({ geo: leaves, mat: L(0xffffff), y: 0, colors: [0x2e9e48, 0x3fb75a, 0x1f8a3c] });
+    parts.push({ geo: new THREE.SphereGeometry(.4, 8, 6), mat: L(0x6d4c2a), y: 7.3, off: [1.5, .3] });
+  } else if (th.deco === 'city') {
+    const bld = new THREE.BoxGeometry(6, 1, 6); bld.translate(0, .5, 0);
+    parts.push({ geo: bld, mat: L(0xffffff), y: 0, scaleY: [8, 26], colors: [0x37474f, 0x455a64, 0x263238, 0x4e342e] });
+    const win = new THREE.BoxGeometry(6.1, .5, 6.1); win.translate(0, .5, 0);
+    parts.push({ geo: win, mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 0, winRows: true, colors: [0xffe082, 0x80deea, 0xfff59d] });
+  } else if (th.deco === 'candy') {
+    parts.push({ geo: new THREE.CylinderGeometry(.18, .18, 6, 6), mat: L(0xffffff), y: 3 });
+    const pop = new THREE.CylinderGeometry(2, 2, .6, 20); pop.rotateX(PI / 2);
+    parts.push({ geo: pop, mat: L(0xffffff), y: 6.5, colors: [0xff4fa3, 0x7c4dff, 0x00e5ff, 0xffd23f, 0x76ff03] });
+    parts.push({ geo: new THREE.SphereGeometry(1.3, 12, 10), mat: L(0xffffff), y: 1.2, off: [3.5, 1], colors: [0xff80ab, 0xb388ff, 0x84ffff, 0xffff8d] });
+  } else if (th.deco === 'mushroom') {
+    parts.push({ geo: new THREE.CylinderGeometry(.9, 1.1, 3, 10), mat: L(0xfff3e0), y: 1.5 });
+    parts.push({ geo: new THREE.SphereGeometry(3, 16, 10, 0, TAU, 0, PI / 2), mat: L(0xffffff), y: 2.8, colors: [0xe53935, 0xfb8c00, 0x8e24aa, 0x1e88e5] });
+    parts.push({ geo: new THREE.SphereGeometry(.5, 8, 6), mat: L(0xffffff), y: 5.6, off: [.8, .4] });
+  } else if (th.deco === 'crystal') {
+    const cr = new THREE.OctahedronGeometry(2, 0); cr.scale(.7, 2.6, .7);
+    parts.push({ geo: cr, mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 4, colors: [0xe040fb, 0x40c4ff, 0x7c4dff, 0x64ffda] });
+    const cr2 = new THREE.OctahedronGeometry(1.2, 0); cr2.scale(.7, 2.2, .7);
+    parts.push({ geo: cr2, mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 2.4, off: [2.2, .5], colors: [0xea80fc, 0x80d8ff] });
   } else if (th.deco === 'cactus') {
     parts.push({ geo: new THREE.CylinderGeometry(.8, .9, 6, 8), mat: L(0x3b8e3b), y: 3 });
     parts.push({ geo: new THREE.CylinderGeometry(.5, .5, 3, 6), mat: L(0x3b8e3b), y: 3.5, off: [1.3, 0] });
@@ -599,18 +659,22 @@ function buildDeco(th) {
     parts.push({ geo: new THREE.CylinderGeometry(.35, .5, 2.5, 6), mat: L(0x6d4c41), y: 1.2 });
     parts.push({ geo: new THREE.ConeGeometry(3, 7, 7), mat: L(0xffffff), y: 5.5, colors: [0x2f5d46, 0x3c6e55, 0x9fb8ad, 0xe6eef5] });
   } else if (th.deco === 'rock') {
-    parts.push({ geo: new THREE.DodecahedronGeometry(2.2, 0), mat: L(0xffffff), y: 1.2, colors: [0x3b2c2a, 0x2a201e, 0x4a3a36] });
-    parts.push({ geo: new THREE.OctahedronGeometry(1, 0), mat: new THREE.MeshBasicMaterial({ color: 0xff6a00 }), y: .5, off: [2.5, 1] });
+    parts.push({ geo: new THREE.DodecahedronGeometry(2.2, 0), mat: L(0xffffff), y: 1.2, colors: th.rockColors || [0x3b2c2a, 0x2a201e, 0x4a3a36] });
+    if (th.volcano) parts.push({ geo: new THREE.OctahedronGeometry(1, 0), mat: new THREE.MeshBasicMaterial({ color: 0xff6a00 }), y: .5, off: [2.5, 1] });
+    else parts.push({ geo: new THREE.TorusGeometry(2.5, .5, 6, 14), mat: L(0x8a8a8a), y: .1, off: [5, 2], flat: true });
   } else {
-    parts.push({ geo: new THREE.BoxGeometry(1.2, 10, 1.2), mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 5, colors: [0xff00e5, 0x00e5ff, 0x7c4dff, 0x00ff9c] });
+    parts.push({ geo: new THREE.BoxGeometry(1.2, 10, 1.2), mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 5, colors: th.rainbow ? [0xff1744, 0xff9100, 0xffea00, 0x00e676, 0x2979ff, 0xd500f9] : [0xff00e5, 0x00e5ff, 0x7c4dff, 0x00ff9c] });
     parts.push({ geo: new THREE.OctahedronGeometry(1.4, 0), mat: new THREE.MeshBasicMaterial({ color: 0xffffff }), y: 12, colors: [0xffffff, 0xffd23f] });
   }
   const dummy = new THREE.Object3D(), col = new THREE.Color();
   parts.forEach(p => {
     const im = new THREE.InstancedMesh(p.geo, p.mat, spots.length);
-    spots.forEach(([x, z, s, r], k) => {
+    spots.forEach(([x, z, s, r, hy], k) => {
       const ox = p.off ? Math.cos(r) * p.off[0] - Math.sin(r) * p.off[1] : 0, oz = p.off ? Math.sin(r) * p.off[0] + Math.cos(r) * p.off[1] : 0;
-      dummy.position.set(x + ox * s, p.y * s, z + oz * s); dummy.rotation.set(0, r, 0); dummy.scale.setScalar(s); dummy.updateMatrix();
+      dummy.position.set(x + ox * s, p.y * s, z + oz * s); dummy.rotation.set(p.flat ? PI / 2 : 0, r, 0); dummy.scale.setScalar(s);
+      if (p.scaleY) { dummy.scale.set(s, hy, s); }
+      if (p.winRows) { dummy.position.y = hy * .35 + (k % 3) * hy * .2; dummy.scale.set(s, 1, s); }
+      dummy.updateMatrix();
       im.setMatrixAt(k, dummy.matrix);
       if (p.colors) im.setColorAt(k, col.set(pick(p.colors)));
     });
@@ -629,7 +693,69 @@ function buildMinimap(minX, maxX, minZ, maxZ) {
 }
 
 // ============ KARTS ============
-function makeKart(color) {
+// ============ PILOTOS FOFINHOS ============
+const PILOTS = [
+  { id: 'menino', name: 'Menino', emoji: '👦' }, { id: 'menina', name: 'Menina', emoji: '👧' }, { id: 'robo', name: 'Robô', emoji: '🤖' },
+  { id: 'cachorro', name: 'Cachorro', emoji: '🐶' }, { id: 'gato', name: 'Gato', emoji: '🐱' }, { id: 'panda', name: 'Panda', emoji: '🐼' },
+  { id: 'coelho', name: 'Coelho', emoji: '🐰' }, { id: 'tigre', name: 'Tigre', emoji: '🐯' },
+];
+function buildPilot(pid, color) {
+  const g = new THREE.Group();
+  const L = c => new THREE.MeshLambertMaterial({ color: c }), B = c => new THREE.MeshBasicMaterial({ color: c });
+  const add = (geo, mat, x, y, z, sx, sy, sz) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (sx) m.scale.set(sx, sy, sz); g.add(m); return m; };
+  const S = (r, w, h) => new THREE.SphereGeometry(r, w || 14, h || 12);
+  const P = { menino: [0xf1c27d, 0xf1c27d], menina: [0xf1c27d, 0xf1c27d], robo: [0xb0bec5, 0x90a4ae], cachorro: [0xd9a066, 0xf3d9b1],
+    gato: [0xf4a259, 0xffe8cc], panda: [0xffffff, 0xffffff], coelho: [0xf5f5f5, 0xffffff], tigre: [0xff9f1c, 0xffffff] }[pid] || [0xf1c27d, 0xf1c27d];
+  const headY = 1.25, hz = 0;
+  // corpo
+  add(new THREE.CylinderGeometry(.45, .58, 1.0, 12), L(pid === 'panda' ? 0x222222 : pid === 'robo' ? 0x78909c : color), 0, .5, 0);
+  // braços no volante
+  [-1, 1].forEach(s => { const a = add(new THREE.CylinderGeometry(.13, .13, .8, 8), L(pid === 'robo' ? 0x78909c : P[0]), s * .42, .65, .45); a.rotation.x = 1.2; a.rotation.z = -s * .3; });
+  // cabeça (grande = fofinho)
+  if (pid === 'robo') {
+    add(new THREE.BoxGeometry(1.1, .95, .95), L(P[0]), 0, headY, hz);
+    add(new THREE.BoxGeometry(.8, .3, .05), B(0x00e5ff), 0, headY + .05, hz + .49);
+    add(new THREE.CylinderGeometry(.04, .04, .45, 6), L(0x555555), 0, headY + .7, hz);
+    add(S(.12), B(0xff1744), 0, headY + .95, hz);
+    [-1, 1].forEach(s => add(new THREE.CylinderGeometry(.15, .15, .1, 10), L(0x546e7a), s * .6, headY, hz).rotation.z = PI / 2);
+    return g;
+  }
+  add(S(.62, 18, 14), L(P[0]), 0, headY, hz, 1, .95, 1);
+  // olhos e bochechas
+  [-1, 1].forEach(s => {
+    add(S(.11, 10, 8), B(0x111111), s * .22, headY + .08, hz + .55);
+    add(S(.04, 6, 6), B(0xffffff), s * .22 + .03, headY + .12, hz + .64);
+    add(S(.1, 10, 8), B(0xff8fab), s * .38, headY - .12, hz + .46, 1, .6, .4);
+  });
+  const ear = (geo, mat, x, y, z, rz, sx, sy, sz) => { const m = add(geo, mat, x, y, z, sx, sy, sz); m.rotation.z = rz; return m; };
+  if (pid === 'menino') {
+    add(new THREE.SphereGeometry(.65, 16, 10, 0, TAU, 0, PI * .45), L(color), 0, headY + .05, hz);
+    add(new THREE.CylinderGeometry(.5, .5, .06, 16), L(color), 0, headY + .3, hz + .45, 1, 1, .8);
+    add(S(.09), L(0xe0a96d), 0, headY - .05, hz + .62);
+  } else if (pid === 'menina') {
+    add(new THREE.SphereGeometry(.67, 16, 10, 0, TAU, 0, PI * .55), L(0x6d3b1f), 0, headY + .02, hz - .02);
+    [-1, 1].forEach(s => { add(S(.26), L(0x6d3b1f), s * .7, headY - .05, hz - .1); add(S(.12), L(0xff4fa3), s * .55, headY + .25, hz - .05); });
+    add(S(.17), L(0xff4fa3), 0, headY + .62, hz - .1, 1.6, .8, .8);
+  } else if (pid === 'cachorro') {
+    [-1, 1].forEach(s => ear(S(.25), L(0x8b5a2b), s * .62, headY - .05, hz, s * .3, .55, 1.25, .5));
+    add(S(.26), L(P[1]), 0, headY - .15, hz + .48, 1.1, .8, .9); add(S(.09), B(0x222222), 0, headY - .05, hz + .72);
+  } else if (pid === 'gato') {
+    [-1, 1].forEach(s => { ear(new THREE.ConeGeometry(.2, .4, 4), L(P[0]), s * .38, headY + .62, hz, -s * .3); ear(new THREE.ConeGeometry(.1, .22, 4), L(0xff8fab), s * .38, headY + .6, hz + .08, -s * .3); });
+    add(S(.2), L(P[1]), 0, headY - .17, hz + .5, 1.2, .7, .7); add(S(.06), B(0xff6f91), 0, headY - .06, hz + .65);
+  } else if (pid === 'panda') {
+    [-1, 1].forEach(s => { add(S(.2), L(0x222222), s * .45, headY + .52, hz); add(S(.17, 10, 8), B(0x222222), s * .22, headY + .06, hz + .5, 1, 1.2, .5); });
+    add(S(.06), B(0x222222), 0, headY - .1, hz + .62);
+  } else if (pid === 'coelho') {
+    [-1, 1].forEach(s => { ear(S(.17), L(P[0]), s * .22, headY + .85, hz, -s * .12, .7, 2.4, .6); ear(S(.1), L(0xffb3c6), s * .22, headY + .85, hz + .08, -s * .12, .6, 2.1, .3); });
+    add(S(.07), B(0xff8fab), 0, headY - .05, hz + .62);
+  } else if (pid === 'tigre') {
+    [-1, 1].forEach(s => { add(S(.18), L(P[0]), s * .45, headY + .52, hz); add(S(.09), L(0x222222), s * .45, headY + .55, hz + .08); });
+    add(S(.24), L(0xffffff), 0, headY - .17, hz + .48, 1.2, .75, .8); add(S(.07), B(0x222222), 0, headY - .05, hz + .68);
+    [[0, .48, .3], [-.25, .4, .4], [.25, .4, .4]].forEach(([x, y, z]) => add(new THREE.BoxGeometry(.08, .22, .05), B(0x222222), x, headY + y, hz + z));
+  }
+  return g;
+}
+function makeKart(color, pilotId, parent) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
   const paint = new THREE.MeshLambertMaterial({ color }), dark = new THREE.MeshLambertMaterial({ color: 0x222222 }), skin = new THREE.MeshLambertMaterial({ color: 0xf1c27d });
   const add = (geo, mat, x, y, z, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || body).add(m); return m; };
@@ -643,11 +769,8 @@ function makeKart(color) {
   const wGeo = new THREE.CylinderGeometry(.55, .55, .6, 14);
   const wheels = [[-1.35, 1.25], [1.35, 1.25], [-1.4, -1.2], [1.4, -1.2]].map(([x, z]) => { const w = add(wGeo, dark, x, .55, z); w.rotation.z = PI / 2; return w; });
   // piloto
-  add(new THREE.CylinderGeometry(.5, .6, 1.2, 10), paint, 0, 1.55, -.4);
-  add(new THREE.SphereGeometry(.42, 12, 10), skin, 0, 2.3, -.4);
-  const helm = add(new THREE.SphereGeometry(.55, 14, 10, 0, TAU, 0, PI * .6), paint, 0, 2.38, -.4);
-  add(new THREE.BoxGeometry(.8, .25, .2), new THREE.MeshBasicMaterial({ color: 0x111133 }), 0, 2.3, .05);
-  add(new THREE.TorusGeometry(.45, .07, 6, 16), dark, 0, 1.55, .55).rotation.x = -.6;
+  const pil = buildPilot(pilotId || 'menino', color); pil.position.set(0, 1.0, -.45); body.add(pil);
+  add(new THREE.TorusGeometry(.4, .07, 6, 16), dark, 0, 1.55, .5).rotation.x = -.6;
   // fogo do turbo
   const flame = add(new THREE.ConeGeometry(.35, 1.8, 8), new THREE.MeshBasicMaterial({ color: 0xffa000, transparent: true, opacity: .9 }), 0, .9, -2.6);
   flame.rotation.x = -PI / 2; flame.visible = false;
@@ -655,8 +778,12 @@ function makeKart(color) {
   // sombra
   const sh = new THREE.Mesh(new THREE.CircleGeometry(2, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .35, depthWrite: false }));
   sh.rotation.x = -PI / 2; sh.position.y = .06; sh.scale.set(1, 1.5, 1); g.add(sh);
-  world.add(g);
-  return { g, body, wheels, flames: [flame, flame2] };
+  const shield = new THREE.Mesh(new THREE.SphereGeometry(3, 20, 14), new THREE.MeshBasicMaterial({ color: 0x40c4ff, transparent: true, opacity: .25, depthWrite: false }));
+  shield.position.y = 1.3; shield.scale.set(1, .8, 1.25); shield.visible = false; g.add(shield);
+  const emo = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+  emo.position.y = 4.6; emo.scale.set(2.4, 2.4, 1); emo.visible = false; g.add(emo);
+  (parent || world).add(g);
+  return { g, body, wheels, flames: [flame, flame2], shield, emo, emoT: 0 };
 }
 
 function stats(r) {
@@ -672,11 +799,12 @@ function spawnRacers(ti) {
     let color = COLORS[who];
     const pc = KART_COLORS[save.color] || COLORS[0];
     if (who === 0) color = pc; else if (color === pc) color = COLORS[0];
-    const kart = makeKart(color);
+    const aiPilots = PILOTS.map(p => p.id).filter(id => id !== save.pilot);
+    const kart = makeKart(color, who === 0 ? save.pilot : aiPilots[(who * 3 + ti) % aiPilots.length]);
     const r = { color, id: who, name: NAMES[who], isPlayer: who === 0, kart, x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat,
       h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
       spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0,
-      aiOff: rnd(-4, 4), aiOffT: 0, aiMax: 50 + ti * 3.2 + rnd(0, 6) };
+      aiOff: rnd(-4, 4), aiOffT: 0, aiMax: 50 + Math.min(ti, 14) * 1.35 + rnd(0, 6) };
     r.prog = r.lap * N + r.idx - N;
     racers.push(r); if (r.isPlayer) player = r;
   });
@@ -699,9 +827,10 @@ function showScreen(id) {
 
 function startRace(ti) {
   curTrack = ti; buildTrack(ti); if (net.on) spawnOnlineRacers(net.participants); else spawnRacers(ti);
+  LAPS = net.on ? (net.laps || 3) : save.laps;
   raceTime = 0; finishCount = 0; endT = 0; countT = 3.5; state = 'count';
   camH = player.h; camPos.set(player.x - Math.sin(camH) * 30, 14, player.z - Math.cos(camH) * 30);
-  setItemUI(); showScreen(null); Snd.engineStart(); lastCount = 99;
+  setItemUI(); showScreen(null); renderVoice(); $('emoBar').classList.remove('on'); $('emoFeed').innerHTML = ''; Snd.engineStart(); lastCount = 99;
 }
 
 let toastT = 0;
@@ -712,7 +841,7 @@ function flash() { $('flash').style.opacity = .8; setTimeout(() => $('flash').st
 function rankOf(r) { return 1 + racers.filter(o => o !== r && (o.finished && !r.finished || (!o.finished && !r.finished && o.prog > r.prog) || (o.finished && r.finished && o.place < r.place))).length; }
 function rollItem(r) {
   const p = rankOf(r);
-  const pool = p === 1 ? ['banana', 'banana', 'turbo', 'missil'] : p >= 4 ? ['turbo', 'turbo', 'missil', 'missil', 'raio', 'banana'] : ['turbo', 'banana', 'missil', 'missil', 'raio'];
+  const pool = p === 1 ? ['banana', 'banana', 'escudo', 'turbo', 'granada'] : p >= 4 ? ['turbo', 'turbo', 'missil', 'missil', 'raio', 'granada', 'escudo'] : ['turbo', 'banana', 'missil', 'granada', 'raio', 'escudo'];
   return pick(pool);
 }
 function giveItem(r) {
@@ -726,6 +855,17 @@ function useItem(r) {
   const near = r.isPlayer || Math.hypot(r.x - player.x, r.z - player.z) < 40;
   if (it === 'turbo' && near) Snd.boost(); else if (it === 'banana' && near) Snd.banana(); else if (it === 'missil' && near) Snd.missile(); else if (it === 'raio') Snd.thunder();
   if (it === 'turbo') r.boost = 2.2;
+  else if (it === 'escudo') { r.shield = 10; if (near) Snd.shield(); }
+  else if (it === 'granada') {
+    let target = null, bd = 1e9;
+    racers.forEach(o => { if (o !== r && !o.finished) { const d = Math.hypot(o.x - r.x, o.z - r.z); if (d < bd) { bd = d; target = o; } } });
+    if (target) {
+      const gid = myId() + '-' + (++netSeq);
+      spawnGrenade(r, target, gid);
+      if (net.on) send({ t: 'granada', gid, owner: r.id, target: target.id });
+      if (r.isPlayer) toast('💣 GRANADA em ' + target.name + '!');
+    }
+  }
   else if (it === 'banana') {
     const x = r.x - Math.sin(r.h) * 4, z = r.z - Math.cos(r.h) * 4, hid = myId() + '-' + (++netSeq);
     spawnBanana(x, z, r, hid);
@@ -737,8 +877,9 @@ function useItem(r) {
     spawnMissile(x, z, r.h, target, r, mid);
     if (net.on) send({ t: 'missile', mid, x, z, h: r.h, target: target ? target.id : null, owner: r.id });
   } else if (it === 'raio') {
+    lightning(r);
     if (net.on) send({ t: 'raio', owner: r.id });
-    else racers.forEach(o => { if (o !== r && !o.finished) { o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
+    else racers.forEach(o => { if (o !== r && !o.finished) { if (o.shield > 0) { o.shield = 0; return; } o.slow = 3.5; o.spin = Math.max(o.spin, .6); } });
     if (r.isPlayer || true) flash();
     if (!r.isPlayer) toast('🌩️ ' + r.name + ' usou o RAIO!');
   }
@@ -754,8 +895,74 @@ function spawnMissile(x, z, h, target, owner, mid) {
   g.position.set(x, 1.2, z); world.add(g);
   missiles.push({ g, x, z, h, target, owner, life: 7, mid });
 }
+let fx = [];
+function lightning(from) {
+  const mat = new THREE.MeshBasicMaterial({ color: 0xfff59d, transparent: true, opacity: 1, depthWrite: false });
+  const glow = new THREE.MeshBasicMaterial({ color: 0x80d8ff, transparent: true, opacity: .5, depthWrite: false });
+  racers.forEach(o => {
+    if (o === from || o.finished) return;
+    const grp = new THREE.Group(), a = new THREE.Vector3(from.x, 2.5, from.z), b = new THREE.Vector3(o.x, 1.5, o.z);
+    const segs = 10, pts = [];
+    for (let i = 0; i <= segs; i++) {
+      const p = a.clone().lerp(b, i / segs); p.y += Math.sin(i / segs * PI) * 10;
+      if (i > 0 && i < segs) { p.x += rnd(-2.5, 2.5); p.y += rnd(-1.5, 1.5); p.z += rnd(-2.5, 2.5); }
+      pts.push(p);
+    }
+    for (let i = 0; i < segs; i++) {
+      const p1 = pts[i], p2 = pts[i + 1], len = p1.distanceTo(p2), mid = p1.clone().add(p2).multiplyScalar(.5);
+      [[.22, mat], [.6, glow]].forEach(([rad, m]) => {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 6), m);
+        c.position.copy(mid); c.lookAt(p2); c.rotateX(PI / 2); c.userData.i = i; grp.add(c);
+      });
+    }
+    const boom = new THREE.Mesh(new THREE.SphereGeometry(2, 12, 10), glow); boom.position.copy(b); boom.userData.i = segs; grp.add(boom);
+    world.add(grp); fx.push({ obj: grp, t: 0, dur: .9, kind: 'bolt', segs, mats: [mat, glow] });
+  });
+}
+function spawnGrenade(owner, target, gid) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(.7, 12, 10), new THREE.MeshLambertMaterial({ color: 0x2e7d32 })));
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, .4, 8), new THREE.MeshLambertMaterial({ color: 0x555555 })); top.position.y = .75; g.add(top);
+  g.position.set(owner.x, 2, owner.z); world.add(g);
+  fx.push({ obj: g, t: 0, dur: 1, kind: 'grenade', sx: owner.x, sz: owner.z, target, owner, gid });
+  Snd.whoosh();
+}
+function explosion(x, z) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff6d00, transparent: true, opacity: .9, depthWrite: false }));
+  m.position.set(x, 1.2, z); world.add(m); fx.push({ obj: m, t: 0, dur: .6, kind: 'boom' });
+  if (player && Math.hypot(x - player.x, z - player.z) < 60) Snd.boom();
+}
+function updateFx(dt) {
+  for (let k = fx.length - 1; k >= 0; k--) {
+    const f = fx[k]; f.t += dt; const u = Math.min(1, f.t / f.dur);
+    if (f.kind === 'bolt') {
+      const shown = Math.min(f.segs, Math.floor(u * 3 * (f.segs + 1)));
+      f.obj.children.forEach(c => c.visible = c.userData.i <= shown);
+      const op = u < .45 ? 1 : 1 - (u - .45) / .55; f.mats[0].opacity = op * (Math.random() < .2 ? .4 : 1); f.mats[1].opacity = op * .5;
+    } else if (f.kind === 'grenade') {
+      const tx2 = f.target.x, tz2 = f.target.z;
+      f.obj.position.set(f.sx + (tx2 - f.sx) * u, 2 + Math.sin(u * PI) * 9, f.sz + (tz2 - f.sz) * u);
+      f.obj.rotation.x += dt * 10;
+      if (u >= 1) {
+        explosion(tx2, tz2);
+        if (!f.target.isRemote) hit(f.target, 1.6);
+      }
+    } else if (f.kind === 'boom') {
+      f.obj.scale.setScalar(1 + u * 5); f.obj.material.opacity = .9 * (1 - u);
+    }
+    if (u >= 1) { world.remove(f.obj); f.obj.traverse(o => o.geometry && o.geometry.dispose()); fx.splice(k, 1); }
+  }
+}
+function showEmo(r, e) {
+  if (!r || !r.kart) return;
+  const k = r.kart;
+  if (!emoTex[e]) emoTex[e] = canvasTex(128, 128, (c, w, h) => { c.font = '100px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, w / 2, h / 2 + 6); });
+  k.emo.material.map = emoTex[e]; k.emo.material.needsUpdate = true; k.emo.visible = true; k.emoT = 3;
+}
+const emoTex = {};
 function hit(r, t) {
   if (r.finished) return;
+  if (r.shield > 0) { r.shield = 0; if (r.isPlayer) { toast('🛡️ O ESCUDO TE PROTEGEU!'); Snd.shield(); } return; }
   r.spin = t || 1.3; r.v *= .3;
   if (r.isPlayer || Math.hypot(r.x - player.x, r.z - player.z) < 30) Snd.hit();
   if (r.isPlayer) { toast('RODOU! 💫'); try { navigator.vibrate && navigator.vibrate(150); } catch (e) {} }
@@ -798,6 +1005,7 @@ function updateRacer(r, dt, canDrive) {
   }
   if (r.boost > 0) { r.boost -= dt; max *= 1.45; r.v = Math.max(r.v, max * .95); }
   if (r.slow > 0) r.slow -= dt;
+  if (r.shield > 0) r.shield -= dt;
 
   if (gas) r.v += st.acc * dt * (r.v < max ? 1 : 0);
   else if (brake) r.v -= (r.v > 0 ? 45 : 18) * dt;
@@ -839,6 +1047,8 @@ function kartVisual(r, dt, steer) {
   k.body.rotation.z = -steer * .06 * clamp(r.v / 40, 0, 1); k.body.position.y = Math.abs(Math.sin(performance.now() / 60)) * .04 * (r.v / 50);
   k.wheels.forEach(w => w.rotation.x += r.v * dt / .55);
   k.flames.forEach(f => { f.visible = r.boost > 0; if (f.visible) f.scale.set(1, 1 + Math.random() * .8, 1); });
+  k.shield.visible = r.shield > 0; if (k.shield.visible) k.shield.material.opacity = .18 + Math.sin(performance.now() / 120) * .07 + (r.shield < 2 ? (Math.sin(performance.now() / 50) > 0 ? .1 : -.1) : 0);
+  if (k.emoT > 0) { k.emoT -= dt; if (k.emoT <= 0) k.emo.visible = false; }
 }
 
 function aiSteer(r, dt) {
@@ -849,6 +1059,10 @@ function aiSteer(r, dt) {
 }
 
 function onLap(r) {
+  if (r.isPlayer) {
+    if (r.lap >= 2 && r.lapStart != null) { const lt = Math.round((raceTime - r.lapStart) * 1000); if (!r.bestLap || lt < r.bestLap) r.bestLap = lt; }
+    r.lapStart = raceTime;
+  }
   if (r.lap > LAPS && !r.finished) {
     r.finished = true; r.place = ++finishCount;
     if (r.isPlayer) {
@@ -861,7 +1075,7 @@ function onLap(r) {
         setTimeout(() => { if (net.on && net.phase === 'race') toast('Aguardando os outros pilotos...', 30); }, 3200);
       } else { Snd.finish(); toast((r.place === 1 ? '🏆 VOCÊ VENCEU! ' : 'CHEGADA! ' + r.place + 'º ') + fmtMs(r.finishMs), 3); endT = 3; }
     }
-  } else if (r.isPlayer && r.lap === LAPS) { toast('ÚLTIMA VOLTA!', 1.5); Snd.lap(); }
+  } else if (r.isPlayer && r.lap === LAPS && LAPS > 1) { toast('ÚLTIMA VOLTA!', 1.5); Snd.lap(); }
   else if (r.isPlayer && r.lap > 1) { toast('VOLTA ' + r.lap + '/' + LAPS); Snd.lap(); }
 }
 
@@ -881,6 +1095,7 @@ function collideKarts() {
 }
 
 function updateWorld(dt, t) {
+  updateFx(dt);
   blocks.forEach(b => {
     if (b.t > 0) { b.t -= dt; b.m.visible = false; }
     else { b.m.visible = true; b.m.rotation.y = t * 1.5 + b.ph; b.m.rotation.x = t * .7; b.m.position.y = 1.8 + Math.sin(t * 2.5 + b.ph) * .3; }
@@ -942,12 +1157,12 @@ function showResult() {
   save.coins += prize; if (place === 1) save.wins++;
   if (!save.best[curTrack] || place < save.best[curTrack]) save.best[curTrack] = place;
   let unlockMsg = '';
-  if (!net.on && place <= 3 && curTrack + 2 > save.unlocked && curTrack < 4) { save.unlocked = curTrack + 2; unlockMsg = '<br>🔓 Nova pista liberada: ' + TRACKS[curTrack + 1].name + '!'; }
+  if (!net.on && place <= 3 && curTrack + 2 > save.unlocked && curTrack < TRACKS.length - 1) { save.unlocked = curTrack + 2; unlockMsg = '<br>🔓 Nova pista liberada: ' + TRACKS[curTrack + 1].name + '!'; }
   persist();
-  const tag = player.finishMs ? '⏱️ ' + fmtMs(player.finishMs) : '';
+  const tag = player.finishMs ? '⏱️ ' + fmtMs(player.finishMs) + (player.bestLap ? ' · melhor volta ' + fmtMs(player.bestLap) : '') : '';
   $('resOnline').textContent = net.on ? 'Próxima votação em alguns segundos...' : '';
   $('resBtns').style.display = net.on ? 'none' : '';
-  if (player.finishMs) submitResult(curTrack, player.finishMs, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE PESSOAL: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde nesta pista: ' + fmtMs(d.best_ms); });
+  if (player.bestLap) submitResult(curTrack, player.bestLap, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE DE VOLTA: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde de volta nesta pista: ' + fmtMs(d.best_ms); });
   $('resTitle').textContent = place === 1 ? '🏆 VOCÊ VENCEU!' : place <= 3 ? 'PÓDIO! ' + place + 'º LUGAR' : place + 'º LUGAR';
   $('resList').innerHTML = order.map((r, k) => `<div class="${r.isPlayer ? 'me' : ''}">${k + 1}º ${esc(r.name)}${net.on && net.finishes[r.id] ? ' <small>' + fmtMs(net.finishes[r.id]) + '</small>' : ''}</div>`).join('');
   $('resCoins').innerHTML = tag + ' · +' + prize + ' 🪙' + (net.on ? '' : unlockMsg);
@@ -964,7 +1179,30 @@ function renderTracks() {
   $('tracks').querySelectorAll('.tcard').forEach(b => b.onclick = () => { const i = +b.dataset.i; if (i < save.unlocked) startRace(i); });
 }
 const UPS = [['motor', '🔥 Motor', 'velocidade máxima'], ['accel', '⚡ Aceleração', 'arrancada'], ['pneu', '🛞 Pneus', 'curvas e grama']];
+let prev = null;
+function renderPreview() {
+  try {
+    if (!prev) {
+      const r = new THREE.WebGLRenderer({ canvas: $('pilotPrev'), antialias: true, alpha: true });
+      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); r.setSize(150, 102, false);
+      const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x666677, 1.05));
+      const d = new THREE.DirectionalLight(0xffffff, .6); d.position.set(5, 10, 8); sc.add(d);
+      prev = { r, sc, cam: new THREE.PerspectiveCamera(32, 150 / 102, .1, 100), kart: null, a: 0 };
+    }
+    if (prev.kart) prev.sc.remove(prev.kart.g);
+    prev.kart = makeKart(KART_COLORS[save.color] || COLORS[0], save.pilot, prev.sc);
+  } catch (e) { prev = null; }
+}
+function drawPreview(dt) {
+  if (!prev || !$('garage').classList.contains('on')) return;
+  prev.a += dt * .7; const a = Math.sin(prev.a) * 1.1;
+  prev.cam.position.set(Math.sin(a) * 6.8, 3.4, Math.cos(a) * 6.8); prev.cam.lookAt(0, 1.7, 0);
+  prev.r.render(prev.sc, prev.cam);
+}
 function renderGarage() {
+  setTimeout(renderPreview, 0);
+  $('pilots').innerHTML = PILOTS.map(p => `<button class="pl ${p.id === save.pilot ? 'sel' : ''}" data-p="${p.id}"><span>${p.emoji}</span>${p.name}</button>`).join('');
+  $('pilots').querySelectorAll('.pl').forEach(b => b.onclick = () => { save.pilot = b.dataset.p; persist(); Snd.click(); if (net.on) trackMe(); renderGarage(); });
   $('swatches').innerHTML = KART_COLORS.map((c, i) => `<button class="sw ${i === save.color ? 'sel' : ''}" data-c="${i}" style="background:#${c.toString(16).padStart(6, '0')}"></button>`).join('');
   $('swatches').querySelectorAll('.sw').forEach(b => b.onclick = () => { save.color = +b.dataset.c; persist(); Snd.click(); renderGarage(); });
   $('ups').innerHTML = UPS.map(([k, n]) => {
@@ -977,12 +1215,24 @@ function renderGarage() {
     if (lv < 5 && save.coins >= cost) { save.coins -= cost; save.up[k]++; persist(); renderGarage(); showScreen('garage'); }
   });
 }
-function goSelect() { renderTracks(); showScreen('select'); state = 'menu'; }
+function goSelect() { renderTracks(); renderLaps(); showScreen('select'); state = 'menu'; }
 function goMenu() { state = 'menu'; showScreen('menu'); if (!racers.length) {} }
 
 document.querySelectorAll('.musBtn').forEach(b => b.onclick = () => { Snd.init(); save.music = (save.music + 1) % SONGS.length; persist(); Snd.music(save.music); refreshSettings(); });
 document.querySelectorAll('.sfxBtn').forEach(b => b.onclick = () => { Snd.init(); save.sfx = !save.sfx; persist(); Snd.applySettings(); refreshSettings(); Snd.click(); });
 refreshSettings();
+function renderLaps() {
+  const n = net.on ? (net.laps || 3) : save.laps;
+  document.querySelectorAll('.lapVal').forEach(e => e.textContent = n);
+  document.querySelectorAll('.hostOnly').forEach(e => e.style.display = !net.on || isHost() ? '' : 'none');
+}
+function changeLaps(d) {
+  if (net.on) { if (!isHost()) return; net.laps = clamp((net.laps || 3) + d, 1, 10); send({ t: 'laps', n: net.laps }); }
+  else { save.laps = clamp(save.laps + d, 1, 10); persist(); }
+  Snd.click(); renderLaps();
+}
+document.querySelectorAll('.lapMinus').forEach(b => b.onclick = () => changeLaps(-1));
+document.querySelectorAll('.lapPlus').forEach(b => b.onclick = () => changeLaps(1));
 $('fsPlay').onclick = async () => { await enterFS(); goSelect(); };
 $('play').onclick = goSelect;
 $('garageBtn').onclick = () => { renderGarage(); showScreen('garage'); };
@@ -1085,7 +1335,7 @@ function loop(now) {
     camera.lookAt(center.x, 0, center.z);
     updateWorld(dt, t);
   }
-  netLoop(dt);
+  netLoop(dt); drawPreview(dt);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').style.opacity = 0; }
   renderer.render(scene, camera);
 }
@@ -1122,7 +1372,7 @@ async function submitResult(track, ms, place) {
 async function renderRecords(tab) {
   $('recTabs').innerHTML = TRACKS.map((t, i) => `<button class="btn s ${tab === i ? 'y' : 'b'}" data-t="${i}">${t.emoji}</button>`).join('') + `<button class="btn s ${tab === 'w' ? 'y' : 'b'}" data-t="w">🏆</button>`;
   $('recTabs').querySelectorAll('button').forEach(b => b.onclick = () => renderRecords(b.dataset.t === 'w' ? 'w' : +b.dataset.t));
-  $('recTitle').textContent = tab === 'w' ? 'MAIS VITÓRIAS' : 'MELHOR TEMPO: ' + TRACKS[tab].name.toUpperCase();
+  $('recTitle').textContent = tab === 'w' ? 'MAIS VITÓRIAS' : 'MELHOR VOLTA: ' + TRACKS[tab].name.toUpperCase();
   $('recList').innerHTML = 'Carregando...';
   if (!sb) { $('recList').innerHTML = 'Sem conexão.'; return; }
   const { data, error } = tab === 'w' ? await sb.rpc('top_wins') : await sb.rpc('leaderboard', { p_track: tab });
@@ -1158,7 +1408,7 @@ function openRoom(code, creating) {
   leaveRoom(true);
   Object.assign(net, { on: true, code, phase: 'lobby', players: new Map(), order: [], host: null, votes: {}, voteEnd: 0, voteDone: false, track: 0, raceId: 0,
     participants: [], finishes: {}, live: {}, joinedAt: Date.now(), firstFinishAt: 0, endSent: false, resultsAt: 0, synced: false, spectating: false,
-    voice: false, micOn: true, peers: new Map(), early: {} });
+    voice: false, micOn: true, peers: new Map(), early: {}, laps: save.laps, emo: {} });
   const ch = sb.channel('kart-room-' + code, { config: { broadcast: { self: false }, presence: { key: myId() } } });
   net.ch = ch;
   ch.on('presence', { event: 'sync' }, onPresence);
@@ -1177,7 +1427,7 @@ function openRoom(code, creating) {
     });
   });
 }
-function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, voice: net.voice }) : null; }
+function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, pilot: save.pilot, voice: net.voice }) : null; }
 
 function leaveRoom(silent) {
   voiceOff(true);
@@ -1191,7 +1441,7 @@ $('startVote').onclick = () => { if (isHost() && net.phase === 'lobby') startVot
 
 function onPresence() {
   const st = net.ch.presenceState(), prev = net.players, m = new Map();
-  for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, voice: !!meta.voice }); }
+  for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, pilot: meta.pilot, voice: !!meta.voice }); }
   net.players = m;
   net.order = [...m.values()].sort((a, b) => a.joinedAt - b.joinedAt || (a.id < b.id ? -1 : 1)).map(p => p.id);
   net.host = net.order[0];
@@ -1202,7 +1452,7 @@ function onPresence() {
   if (net.phase === 'race' && isHost()) checkRaceEnd();
 }
 function sendSync() {
-  send({ t: 'sync', phase: net.phase, track: net.track, raceId: net.raceId, participants: net.participants,
+  send({ t: 'sync', laps: net.laps, phase: net.phase, track: net.track, raceId: net.raceId, participants: net.participants,
     voteLeft: Math.max(0, net.voteEnd - performance.now()), votes: net.votes, finishes: net.finishes });
 }
 
@@ -1211,7 +1461,7 @@ function onNet(p) {
   switch (p.t) {
     case 'sync':
       if (net.synced || isHost()) return; net.synced = true;
-      net.track = p.track; net.raceId = p.raceId; net.participants = p.participants || []; net.finishes = p.finishes || {};
+      net.track = p.track; net.raceId = p.raceId; net.laps = p.laps || 3; renderLaps(); net.participants = p.participants || []; net.finishes = p.finishes || {};
       if (p.phase === 'vote') enterVote(p.voteLeft, p.votes);
       else { net.phase = p.phase; net.spectating = p.phase === 'race'; renderRoom(); }
       break;
@@ -1222,7 +1472,7 @@ function onNet(p) {
       if (p.rid !== net.raceId) return;
       net.live[p.id] = p;
       const r = racers.find(o => o.isRemote && o.id === p.id);
-      if (r) { r.net = { x: p.x, z: p.z, h: p.h, v: p.v, sp: p.sp, sl: p.sl, b: p.b, t: performance.now() }; r.lap = p.lap; r.idx = p.idx; r.prog = p.lap * N + p.idx - N; }
+      if (r) { r.net = { x: p.x, z: p.z, h: p.h, v: p.v, sp: p.sp, sl: p.sl, b: p.b, sh: p.sh, t: performance.now() }; r.lap = p.lap; r.idx = p.idx; r.prog = p.lap * N + p.idx - N; }
       if (net.spectating) renderRoom();
       break;
     }
@@ -1241,10 +1491,15 @@ function onNet(p) {
     case 'msGone': { const k = missiles.findIndex(m => m.mid === p.mid); if (k >= 0) { world.remove(missiles[k].g); missiles.splice(k, 1); } break; }
     case 'raio':
       if ((state === 'race' || state === 'count') && player && !player.finished && net.participants.includes(myId())) {
-        player.slow = 3.5; player.spin = Math.max(player.spin, .6); flash(); Snd.thunder(); toast('🌩️ ' + nameOf(p.owner) + ' usou o RAIO!');
+        const o = racers.find(x => x.id === p.owner); if (o) lightning(o); Snd.thunder();
+        if (player.shield > 0) { player.shield = 0; toast('🛡️ O ESCUDO TE PROTEGEU DO RAIO!'); Snd.shield(); }
+        else { player.slow = 3.5; player.spin = Math.max(player.spin, .6); flash(); toast('🌩️ ' + nameOf(p.owner) + ' usou o RAIO!'); }
       }
       break;
     case 'rtc': onRtc(p); break;
+    case 'laps': net.laps = p.n; renderLaps(); break;
+    case 'emo': gotEmo(p.id, p.e); break;
+    case 'granada': if (state === 'race' || state === 'count') { const o = racers.find(x => x.id === p.owner), tg = racers.find(x => x.id === p.target); if (o && tg) spawnGrenade(o, tg, p.gid); } break;
   }
 }
 
@@ -1256,16 +1511,16 @@ function enterVote(ms, votes) {
 }
 function renderVote() {
   if (!$('vote').classList.contains('on')) return;
-  const counts = [0, 0, 0, 0, 0]; Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
+  const counts = TRACKS.map(() => 0); Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
   const mine = net.votes[myId()];
   $('voteTracks').innerHTML = TRACKS.map((t, i) => `<button class="tcard ${mine === i ? 'voted' : ''}" data-i="${i}"><div class="em">${t.emoji}</div><div class="nm">${t.name}</div><div class="info">${counts[i]} voto${counts[i] === 1 ? '' : 's'}</div></button>`).join('');
   $('voteTracks').querySelectorAll('.tcard').forEach(b => b.onclick = () => { const i = +b.dataset.i; net.votes[myId()] = i; send({ t: 'vote', id: myId(), track: i }); Snd.click(); renderVote(); });
   $('voteInfo').textContent = 'Empate? Quem entrou primeiro na sala (' + nameOf(net.order[0]) + ') decide.';
 }
 function tallyVotes() {
-  const counts = [0, 0, 0, 0, 0]; Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
+  const counts = TRACKS.map(() => 0); Object.entries(net.votes).forEach(([id, t]) => { if (net.players.has(id)) counts[t]++; });
   const max = Math.max(...counts);
-  if (max === 0) { const firstVote = net.votes[net.order[0]]; return firstVote != null ? firstVote : Math.floor(Math.random() * 5); }
+  if (max === 0) { const firstVote = net.votes[net.order[0]]; return firstVote != null ? firstVote : Math.floor(Math.random() * TRACKS.length); }
   const tied = counts.map((c, i) => c === max ? i : -1).filter(i => i >= 0);
   if (tied.length === 1) return tied[0];
   for (const id of net.order) { const v = net.votes[id]; if (v != null && tied.includes(v)) return v; }
@@ -1273,11 +1528,11 @@ function tallyVotes() {
 }
 function hostStartRace() {
   net.voteDone = true;
-  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice() };
+  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice(), laps: net.laps || 3 };
   send(msg); startOnline(msg);
 }
 function startOnline(p) {
-  net.phase = 'race'; net.track = p.track; net.raceId = p.raceId; net.participants = p.participants;
+  net.phase = 'race'; net.track = p.track; net.raceId = p.raceId; net.participants = p.participants; net.laps = p.laps || 3;
   net.finishes = {}; net.live = {}; net.firstFinishAt = 0; net.endSent = false; net.voteDone = true; net.synced = true;
   if (!p.participants.includes(myId())) { net.spectating = true; showScreen('room'); renderRoom(); return; }
   net.spectating = false;
@@ -1293,7 +1548,7 @@ function spawnOnlineRacers(parts) {
     let color = KART_COLORS[me ? save.color : pl.color] || COLORS[k % COLORS.length];
     if (!me && usedColors.includes(color)) color = KART_COLORS.find(c => !usedColors.includes(c)) || color;
     usedColors.push(color);
-    const kart = makeKart(color);
+    const kart = makeKart(color, me ? save.pilot : (pl.pilot || 'menino'));
     const r = { color, id, name: me ? save.name : (pl.name || id), isPlayer: me, isRemote: !me, kart,
       x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
       spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0, aiOff: 0, aiOffT: 0, aiMax: 50 };
@@ -1306,7 +1561,7 @@ function updateRemote(r, dt) {
   const ex = s.x + Math.sin(s.h) * s.v * age, ez = s.z + Math.cos(s.h) * s.v * age, f = Math.min(1, dt * 10);
   if (Math.hypot(ex - r.x, ez - r.z) > 25) { r.x = ex; r.z = ez; } else { r.x += (ex - r.x) * f; r.z += (ez - r.z) * f; }
   r.h += wrapA(s.h - r.h) * f; r.v = s.v;
-  r.slow = s.sl ? 1 : 0; r.boost = s.b ? 1 : 0;
+  r.slow = s.sl ? 1 : 0; r.boost = s.b ? 1 : 0; r.shield = s.sh ? 1 : 0;
   if (s.sp) r.spinA += dt * 14; else r.spinA *= .8;
   kartVisual(r, dt, 0);
 }
@@ -1340,7 +1595,9 @@ function renderRoom() {
     if (net.phase === 'race' && net.participants.includes(id)) {
       const lv = net.live[id]; st = net.finishes[id] != null ? '🏁 chegou ' + fmtMs(net.finishes[id]) : '🏎️ correndo' + (lv ? ' · volta ' + clamp(lv.lap, 1, LAPS) + '/' + LAPS : '');
     }
-    return `<div class="${me ? 'me' : ''}">${id === net.host ? '👑 ' : ''}${esc(p.name)}${me ? ' (você)' : ''} ${p.voice ? '🎙️' : ''} <small>${st}</small></div>`;
+    const em = net.emo[id] && net.emo[id].until > performance.now() ? ' <span style="font-size:1.4em">' + net.emo[id].e + '</span>' : '';
+    const pe = (PILOTS.find(x => x.id === (me ? save.pilot : p.pilot)) || PILOTS[0]).emoji;
+    return `<div class="${me ? 'me' : ''}">${id === net.host ? '👑 ' : ''}${pe} ${esc(p.name)}${me ? ' (você)' : ''} ${p.voice ? '🎙️' : ''}${em} <small>${st}</small></div>`;
   }).join('');
   let s = '';
   if (net.phase === 'lobby') s = isHost() ? 'Você é o dono da sala! Mande o código para os amigos e toque em COMEÇAR.' : 'Aguardando ' + nameOf(net.host) + ' começar a votação...';
@@ -1349,6 +1606,7 @@ function renderRoom() {
   else if (net.phase === 'vote') s = 'Votação em andamento...';
   $('roomStatus').textContent = s;
   $('startVote').style.display = isHost() && net.phase === 'lobby' ? '' : 'none';
+  renderLaps();
   renderVoice();
 }
 function netLoop(dt) {
@@ -1367,7 +1625,7 @@ function netLoop(dt) {
       const n = Math.max(1, net.participants.length);
       stT = n <= 3 ? 1 / 10 : n <= 5 ? 1 / 7 : 1 / 5;
       send({ t: 'st', rid: net.raceId, id: myId(), x: +player.x.toFixed(2), z: +player.z.toFixed(2), h: +player.h.toFixed(3), v: +player.v.toFixed(1),
-        lap: player.lap, idx: player.idx, sp: player.spin > 0 ? 1 : 0, sl: player.slow > 0 ? 1 : 0, b: player.boost > 0 ? 1 : 0 });
+        lap: player.lap, idx: player.idx, sh: player.shield > 0 ? 1 : 0, sp: player.spin > 0 ? 1 : 0, sl: player.slow > 0 ? 1 : 0, b: player.boost > 0 ? 1 : 0 });
     }
   }
 }
@@ -1438,11 +1696,31 @@ function closePeer(id) {
   const a = document.getElementById('aud-' + id); if (a) a.remove();
 }
 function toggleMic() { net.micOn = !net.micOn; if (net.stream) net.stream.getAudioTracks().forEach(t => t.enabled = net.micOn); renderVoice(); }
+function sendEmo(e) {
+  if (!net.on) return;
+  send({ t: 'emo', id: myId(), e }); gotEmo(myId(), e); Snd.click();
+  $('emoBar').classList.remove('on');
+}
+function gotEmo(id, e) {
+  if (!EMOS.includes(e)) return;
+  net.emo[id] = { e, until: performance.now() + 3500 };
+  const r = racers.find(x => x.id === id && (x.isRemote || x.isPlayer)); if (r && (state === 'race' || state === 'count')) showEmo(r, e);
+  if (state === 'race' || state === 'count') {
+    const d = document.createElement('div'); d.textContent = nameOf(id) + ': ' + e; $('emoFeed').appendChild(d);
+    setTimeout(() => d.remove(), 3500); while ($('emoFeed').children.length > 4) $('emoFeed').firstChild.remove();
+  }
+  renderRoom(); setTimeout(renderRoom, 3600);
+}
+$('emoRow').innerHTML = EMOS.map(e => `<button class="emob" data-e="${e}">${e}</button>`).join('');
+$('emoBar').innerHTML = EMOS.map(e => `<button data-e="${e}">${e}</button>`).join('');
+document.querySelectorAll('#emoRow button, #emoBar button').forEach(b => b.onclick = () => sendEmo(b.dataset.e));
+$('hudEmo').onclick = () => $('emoBar').classList.toggle('on');
 function renderVoice() {
   $('voiceBtn').textContent = net.voice ? '🔇 Desligar áudio da sala' : '🎙️ Ligar áudio da sala';
   $('micBtn').style.display = net.voice ? '' : 'none';
   $('micBtn').textContent = net.micOn ? '🎙️ Microfone ligado' : '🤐 Microfone mutado';
   $('hudMic').style.display = net.on && net.voice ? '' : 'none';
+  $('hudEmo').style.display = net.on ? '' : 'none';
   $('hudMic').textContent = net.micOn ? '🎙️' : '🤐';
 }
 $('voiceBtn').onclick = () => net.voice ? voiceOff() : voiceOn();
