@@ -108,7 +108,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 <div id="hud">
   <div id="hudTL" class="safe"><div id="pos">1<small>º/6</small></div><div id="lap">VOLTA 1/3</div><div id="spd">0 km/h</div></div>
   <div id="hudTR" class="safe">
-    <div class="hbtns"><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">II</button><button class="icon-btn" id="fsHud">⛶</button></div>
+    <div class="hbtns"><button class="icon-btn" id="hudMic" style="display:none">🎙️</button><button class="icon-btn" id="pauseBtn">⏸</button><button class="icon-btn" id="exitBtn">✕</button><button class="icon-btn" id="fsHud">⛶</button></div>
     <canvas id="mini" width="260" height="200"></canvas>
   </div>
   <div id="toast"></div>
@@ -171,6 +171,13 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <div class="coins" id="resCoins"></div>
   <div class="sub" id="resOnline"></div>
   <div class="row" id="resBtns"><button class="btn" id="resNext">CONTINUAR</button><button class="btn b" id="resGarage">🔧 GARAGEM</button></div>
+</div>
+
+<!-- Confirmar saída -->
+<div class="screen" id="confirmExit">
+  <h2>SAIR DA CORRIDA?</h2>
+  <div class="sub" id="exitInfo"></div>
+  <div class="row"><button class="btn g" id="exitNo">CONTINUAR CORRENDO</button><button class="btn y" id="exitYes">SIM, SAIR</button></div>
 </div>
 
 <!-- Nome do piloto -->
@@ -683,7 +690,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -991,6 +998,27 @@ function doPause() {
   state = 'pause'; Snd.engineStop(); showScreen('paused');
 }
 $('pauseBtn').onclick = doPause;
+function askExit() {
+  if (state !== 'race' && state !== 'count' && state !== 'pause') return;
+  Object.keys(input).forEach(k => input[k] = false);
+  if (!net.on && state !== 'pause') { state = 'pause'; Snd.engineStop(); }
+  $('exitInfo').textContent = net.on ? 'A corrida continua para os outros. Você volta para a sala e entra na próxima corrida.' : 'Você volta para o menu e essa corrida não conta.';
+  showScreen('confirmExit');
+}
+$('exitBtn').onclick = askExit;
+$('exitNo').onclick = () => { if (net.on) { showScreen(null); return; } state = countT > 0 ? 'count' : 'race'; showScreen(null); Snd.engineStart(); };
+$('exitYes').onclick = () => {
+  Snd.engineStop();
+  if (net.on) {
+    send({ t: 'quit', rid: net.raceId, id: myId() });
+    net.participants = net.participants.filter(x => x !== myId());
+    state = 'menu'; buildTrack(curTrack); net.spectating = true;
+    if (isHost()) checkRaceEnd();
+    if (net.phase === 'race') { showScreen('room'); renderRoom(); }
+    return;
+  }
+  buildTrack(curTrack); goMenu();
+};
 $('resume').onclick = () => { if (net.on) { showScreen(null); return; } state = countT > 0 ? 'count' : 'race'; showScreen(null); Snd.engineStart(); };
 $('restart').onclick = () => { Snd.engineStop(); startRace(curTrack); };
 $('quit').onclick = () => { if (net.on) { leaveRoom(false); return; } Snd.engineStop(); buildTrack(curTrack); goMenu(); };
@@ -1206,6 +1234,7 @@ function onNet(p) {
       break;
     }
     case 'end': if (p.rid === net.raceId) endOnline(); break;
+    case 'quit': if (p.rid === net.raceId) { removeRemote(p.id); if (isHost()) checkRaceEnd(); renderRoom(); } break;
     case 'banana': if (state === 'race' || state === 'count') spawnBanana(p.x, p.z, racers.find(o => o.id === p.owner) || null, p.hid); break;
     case 'hzGone': { const k = hazards.findIndex(h => h.hid === p.hid); if (k >= 0) { world.remove(hazards[k].m); hazards.splice(k, 1); } break; }
     case 'missile': if (state === 'race' || state === 'count') spawnMissile(p.x, p.z, p.h, racers.find(o => o.id === p.target) || null, racers.find(o => o.id === p.owner) || null, p.mid); break;
