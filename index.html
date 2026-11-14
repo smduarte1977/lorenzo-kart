@@ -150,7 +150,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
     <button class="btn y" id="play">JOGAR SOZINHO</button>
     <button class="btn" id="onlineBtn">🌐 CORRER ONLINE</button>
   </div>
-  <div class="row"><button class="btn b s" id="garageBtn">🔧 GARAGEM</button><button class="btn b s" id="recBtn">🏆 RECORDES</button></div>
+  <div class="row"><button class="btn b s" id="garageBtn">🔧 GARAGEM</button><button class="btn b s" id="recBtn">🏆 RECORDES</button><button class="btn g s" id="quitGame">🚪 SAIR DO JOGO</button></div>
   <div class="keys desk">No computador: <b>←</b><b>→</b> virar · <b>↑</b> acelerar · <b>↓</b> ré · <b>ESPAÇO</b> ou <b>E</b> jogar item (banana, míssil, raio, turbo) · <b>P</b> pausa · <b>F</b> tela cheia</div>
   <div class="row"><button class="btn s b musBtn"></button><button class="btn s b sfxBtn"></button></div>
   <div class="sub">Pegue os blocos da sorte ❓ · Passe nas faixas de turbo · Atrapalhe os adversários!</div>
@@ -188,7 +188,15 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <div class="res" id="resList"></div>
   <div class="coins" id="resCoins"></div>
   <div class="sub" id="resOnline"></div>
+  <div class="row" id="resOnBtns" style="display:none"><button class="btn g s leaveRoomBtn">SAIR DA SALA</button></div>
   <div class="row" id="resBtns"><button class="btn" id="resNext">CONTINUAR</button><button class="btn b" id="resGarage">🔧 GARAGEM</button></div>
+</div>
+
+<!-- Tchau -->
+<div class="screen" id="bye">
+  <h1>ATÉ A PRÓXIMA!</h1>
+  <div class="sub">Pode fechar o jogo. O seu progresso fica salvo neste aparelho.</div>
+  <div class="row"><button class="btn" id="byeBack">VOLTAR A JOGAR</button></div>
 </div>
 
 <!-- Confirmar saída -->
@@ -204,7 +212,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <input class="inp" id="nameIn" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ex: Lorenzo_10">
   <div class="sub">3 a 16 letras ou números, sem espaço. Pode usar _ (underline).<br>Esse nome é seu ID: ele fica registrado e aparece nos recordes.</div>
   <div class="sub" id="nameMsg" style="color:#ffd23f"></div>
-  <div class="row"><button class="btn" id="nameOk">CONFIRMAR</button></div>
+  <div class="row"><button class="btn g" id="nameBack">VOLTAR</button><button class="btn" id="nameOk">CONFIRMAR</button></div>
 </div>
 
 <!-- Recordes -->
@@ -228,7 +236,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
 
 <!-- Sala -->
 <div class="screen" id="room">
-  <div class="sub">CÓDIGO DA SALA</div>
+  <div class="sub">CÓDIGO DA SALA · <span id="roomCount">1/8</span> pilotos</div>
   <div class="row" style="align-items:center"><div class="code" id="roomCode"></div><button class="btn s b" id="copyCode">📋 Copiar</button></div>
   <div class="res scroll" id="roomList"></div>
   <div class="row" style="align-items:center" id="roomLapsRow"><span class="sub">VOLTAS:</span><button class="btn s b lapMinus hostOnly">−</button><span class="coins lapVal" id="roomLaps">3</span><button class="btn s b lapPlus hostOnly">+</button></div>
@@ -243,6 +251,7 @@ h2{font-size:clamp(24px,7vh,44px);color:#ffd23f;text-shadow:0 4px 0 #b3003c}
   <h2>VOTE NA PISTA · <span id="voteTimer">20s</span></h2>
   <div class="tracks" id="voteTracks"></div>
   <div class="sub" id="voteInfo"></div>
+  <div class="row"><button class="btn g s leaveRoomBtn">SAIR DA SALA</button></div>
 </div>
 <div id="audios" style="display:none"></div>
 
@@ -824,7 +833,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -1167,7 +1176,7 @@ function showResult() {
   persist();
   const tag = player.finishMs ? '⏱️ ' + fmtMs(player.finishMs) + (player.bestLap ? ' · melhor volta ' + fmtMs(player.bestLap) : '') : '';
   $('resOnline').textContent = net.on ? 'Próxima votação em alguns segundos...' : '';
-  $('resBtns').style.display = net.on ? 'none' : '';
+  $('resBtns').style.display = net.on ? 'none' : ''; $('resOnBtns').style.display = net.on ? '' : 'none';
   if (player.bestLap) submitResult(curTrack, player.bestLap, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE DE VOLTA: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde de volta nesta pista: ' + fmtMs(d.best_ms); });
   $('resTitle').textContent = place === 1 ? '🏆 VOCÊ VENCEU!' : place <= 3 ? 'PÓDIO! ' + place + 'º LUGAR' : place + 'º LUGAR';
   $('resList').innerHTML = order.map((r, k) => `<div class="${r.isPlayer ? 'me' : ''}">${k + 1}º ${esc(r.name)}${net.on && net.finishes[r.id] ? ' <small>' + fmtMs(net.finishes[r.id]) + '</small>' : ''}</div>`).join('');
@@ -1222,7 +1231,13 @@ function renderGarage() {
   });
 }
 function goSelect() { renderTracks(); renderLaps(); showScreen('select'); state = 'menu'; }
-function goMenu() { state = 'menu'; showScreen('menu'); if (!racers.length) {} }
+function goMenu() { state = 'menu'; showScreen('menu'); }
+$('quitGame').onclick = async () => {
+  Snd.music(0); if (isFS()) await exitFS();
+  showScreen('bye');
+  try { window.close(); } catch (e) {}
+};
+$('byeBack').onclick = () => { Snd.music(save.music); goMenu(); };
 
 document.querySelectorAll('.musBtn').forEach(b => b.onclick = () => { Snd.init(); save.music = (save.music + 1) % SONGS.length; persist(); Snd.music(save.music); refreshSettings(); });
 document.querySelectorAll('.sfxBtn').forEach(b => b.onclick = () => { Snd.init(); save.sfx = !save.sfx; persist(); Snd.applySettings(); refreshSettings(); Snd.click(); });
@@ -1370,6 +1385,7 @@ $('nameOk').onclick = async () => {
   save.name = data.name; persist(); showMeName(); Snd.click(); goMenu();
 };
 $('changeName').onclick = goName;
+$('nameBack').onclick = () => goMenu();
 
 async function submitResult(track, ms, place) {
   if (!sb || !save.name || !ms) return null;
@@ -1388,18 +1404,20 @@ async function renderRecords(tab) {
   $('recList').innerHTML = data.map((r, k) => `<div class="${r.name.toLowerCase() === me ? 'me' : ''}">${['🥇', '🥈', '🥉'][k] || (k + 1) + 'º'} ${esc(r.name)} — ${tab === 'w' ? r.wins + ' vitórias' : fmtMs(r.best_ms)}</div>`).join('');
 }
 $('recBtn').onclick = () => { showScreen('records'); renderRecords(curTrack); };
+function goNameIfNeeded() { if (save.name) return false; goName(); $('nameMsg').textContent = 'Para correr online e aparecer nos recordes, crie seu nome de piloto.'; return true; }
 $('recBack').onclick = goMenu;
 
 // ============ ONLINE: SALAS COM CÓDIGO DE 8 DÍGITOS ============
 const net = { on: false, players: new Map(), order: [], peers: new Map() };
 const myId = () => (save.name || '').toLowerCase();
 const isHost = () => net.on && net.host === myId();
+const MAX_ROOM = 8;
 const nameOf = id => (net.players.get(id) || {}).name || id;
 let netSeq = 0, stT = 0, netTick = 0;
 function send(o) { if (net.ch) net.ch.send({ type: 'broadcast', event: 'm', payload: o }); }
 function genCode() { let s = '' + (1 + Math.floor(Math.random() * 9)); for (let i = 0; i < 7; i++) s += Math.floor(Math.random() * 10); return s; }
 
-$('onlineBtn').onclick = () => { if (!save.name) { goName(); return; } $('onMsg').textContent = ''; $('codeIn').value = ''; showScreen('online'); };
+$('onlineBtn').onclick = () => { if (goNameIfNeeded()) return; $('onMsg').textContent = ''; $('codeIn').value = ''; showScreen('online'); };
 $('onBack').onclick = goMenu;
 $('codeIn').addEventListener('input', () => { $('codeIn').value = $('codeIn').value.replace(/\D/g, '').slice(0, 8); });
 $('createRoom').onclick = async () => { $('onMsg').textContent = 'Criando sala...'; if (await openRoom(genCode(), true)) { net.synced = true; showScreen('room'); renderRoom(); } };
@@ -1426,7 +1444,8 @@ function openRoom(code, creating) {
         done = true; await trackMe();
         if (creating) return res(true);
         setTimeout(() => {
-          if ([...net.players.keys()].some(k => k !== myId())) res(true);
+          if (net.order.indexOf(myId()) >= MAX_ROOM) { leaveRoom(true); $('onMsg').textContent = 'Essa sala está cheia (máximo de ' + MAX_ROOM + ' pilotos).'; showScreen('online'); res(false); }
+          else if ([...net.players.keys()].some(k => k !== myId())) res(true);
           else { leaveRoom(true); $('onMsg').textContent = 'Sala não encontrada. Confira o código.'; showScreen('online'); res(false); }
         }, 2500);
       } else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') && !done) { done = true; $('onMsg').textContent = 'Não consegui conectar. Tente de novo.'; res(false); }
@@ -1442,6 +1461,7 @@ function leaveRoom(silent) {
   if (!silent) { Snd.engineStop(); state = 'menu'; buildTrack(curTrack); goMenu(); }
 }
 $('leaveRoom').onclick = () => leaveRoom(false);
+document.querySelectorAll('.leaveRoomBtn').forEach(b => b.onclick = () => leaveRoom(false));
 $('copyCode').onclick = async () => { try { await navigator.clipboard.writeText(net.code); $('copyCode').textContent = '✔ Copiado'; setTimeout(() => $('copyCode').textContent = '📋 Copiar', 1500); } catch (e) {} };
 $('startVote').onclick = () => { if (isHost() && net.phase === 'lobby') startVote(); };
 
@@ -1534,7 +1554,7 @@ function tallyVotes() {
 }
 function hostStartRace() {
   net.voteDone = true;
-  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice(), laps: net.laps || 3 };
+  const msg = { t: 'start', track: tallyVotes(), raceId: Date.now(), participants: net.order.slice(0, MAX_ROOM), laps: net.laps || 3 };
   send(msg); startOnline(msg);
 }
 function startOnline(p) {
@@ -1594,6 +1614,7 @@ function endOnline() {
 }
 function renderRoom() {
   if (!net.on) return;
+  $('roomCount').textContent = Math.min(net.order.length, MAX_ROOM) + '/' + MAX_ROOM;
   $('roomCode').textContent = net.code.slice(0, 4) + ' ' + net.code.slice(4);
   $('roomList').innerHTML = net.order.map(id => {
     const p = net.players.get(id), me = id === myId();
