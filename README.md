@@ -1,9 +1,12 @@
-# 🏎️ Lorenzo Kart
+# 🏎️ Lorenzo Kart 2.0
 
 Jogo de corrida de kart em 3D que roda direto no navegador, feito pelo Lorenzo com a ajuda do Claude.
 
 **Jogar:** https://smduarte1977.github.io/lorenzo-kart
 
+- **2.0:** gráfico em alta definição (até 3× a resolução da tela): karts brilhantes, pilotos estilo desenho animado, sombras, grama, poeira e faíscas. Botão ✨ Gráfico: ULTRA, ALTO ou MÉDIO, com medidor de FPS
+- Níveis 🟢 Fácil, 🟡 Médio e 🔴 Difícil (escolhidos depois da pista; na sala online o nível é votado junto com a pista)
+- Versão 1, mais leve, em https://smduarte1977.github.io/lorenzo-kart/v1/
 - 15 pistas: Vale Verde, Deserto Dourado, Pico Nevado, Vulcão Furioso, Galáxia Neon, Praia Tropical, Cidade Noturna, Terra dos Doces, Floresta de Outono, Selva Amazônica, Cratera Lunar, Reino dos Cogumelos, Caverna de Cristal, Jardim das Cerejeiras e Arco-Íris Final
 - 8 pilotos: menino, menina, robô, cachorro, gato, panda, coelho e tigre
 - Corridas de 1 a 10 voltas, recorde de melhor volta por pista
