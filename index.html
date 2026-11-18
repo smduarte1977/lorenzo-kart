@@ -158,7 +158,7 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
 <!-- Menu -->
 <div class="screen on" id="menu">
   <h1>LORENZO KART<span class="v2">2.0</span></h1>
-  <div class="coins">👤 <span id="meName">—</span> <button class="btn s g" id="changeName">trocar</button> · 🪙 <span class="cn">0</span> · 🏆 <span id="wins">0</span></div>
+  <div class="coins">👤 <span id="meName">—</span> <button class="btn s g" id="changeName">trocar</button> <button class="btn s g" id="passBtn">🔑 senha</button> · 🪙 <span class="cn">0</span> · 🏆 <span id="wins">0</span></div>
   <div class="row">
     <button class="btn" id="fsPlay">⛶ JOGAR EM TELA CHEIA</button>
     <button class="btn y" id="play">JOGAR SOZINHO</button>
@@ -257,6 +257,33 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
   <div class="row"><button class="btn g" id="nameBack">VOLTAR</button><button class="btn" id="nameOk">CONFIRMAR</button></div>
 </div>
 
+<!-- Quem vai jogar -->
+<div class="screen" id="who">
+  <h2>QUEM VAI JOGAR?</h2>
+  <div class="swatches" id="whoList" style="max-width:640px"></div>
+  <div class="row"><button class="btn y" id="whoNew">➕ NOVO PILOTO</button><button class="btn g" id="whoBack">VOLTAR</button></div>
+</div>
+
+<!-- Senha -->
+<div class="screen" id="passScr">
+  <h2 id="passTitle">SENHA</h2>
+  <input class="inp" id="passIn" type="password" maxlength="12" autocomplete="off" placeholder="digite sua senha">
+  <div class="sub" id="passHint"></div>
+  <div class="sub" id="passMsg" style="color:#ffd23f"></div>
+  <div class="row"><button class="btn g" id="passBack">VOLTAR</button><button class="btn" id="passOk">ENTRAR</button></div>
+</div>
+
+<!-- Cadastrar senha -->
+<div class="screen" id="newPass">
+  <h2>CADASTRE SUA SENHA</h2>
+  <div class="sub" id="npWho"></div>
+  <input class="inp" id="np1" type="password" maxlength="12" autocomplete="off" placeholder="nova senha (4 a 12)">
+  <input class="inp" id="np2" type="password" maxlength="12" autocomplete="off" placeholder="repita a senha">
+  <div class="sub">Essa senha guarda o seu histórico: garagem, moedas e vitórias.</div>
+  <div class="sub" id="npMsg" style="color:#ffd23f"></div>
+  <div class="row"><button class="btn g" id="npLater">DEPOIS</button><button class="btn" id="npOk">SALVAR</button></div>
+</div>
+
 <!-- Recordes -->
 <div class="screen" id="records">
   <h2>🏆 RECORDES</h2>
@@ -328,9 +355,21 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ============ SALVAMENTO ============
 const SAVE_KEY = 'lorenzoKart_v1';
-let save = { coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [], color: 0, music: 1, sfx: true, pilot: 'menino', laps: 3, racers: 6 };
-try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object.assign(save, s); } catch (e) {}
-const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+// Cada piloto tem o próprio salvamento (garagem, moedas, vitórias) neste aparelho/navegador.
+// A lista de pilotos que já entraram aqui fica guardada em USERS_KEY, com a senha de cada um.
+const USERS_KEY = 'lorenzoKart_users', DEF_PASS = '1234';
+const freshSave = () => ({ coins: 0, wins: 0, unlocked: 1, up: { motor: 0, accel: 0, pneu: 0 }, best: [], color: 0, music: 1, sfx: true, pilot: 'menino', laps: 3, racers: 6 });
+const userKey = n => 'lorenzoKart_u_' + n.toLowerCase();
+const readJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let users = readJSON(USERS_KEY) || { list: [], cur: null };
+let save = Object.assign(freshSave(), readJSON(SAVE_KEY) || {});
+// Migração: quem já jogava vira o primeiro piloto do aparelho, com a senha padrão
+if (!users.list.length && save.name) { users.list.push({ name: save.name, pass: DEF_PASS }); users.cur = save.name; writeJSON(userKey(save.name), save); writeJSON(USERS_KEY, users); }
+const findUser = n => users.list.find(u => u.name.toLowerCase() === String(n || '').toLowerCase());
+function loadUser(n) { const d = readJSON(userKey(n)); save = Object.assign(freshSave(), d || {}, { name: findUser(n).name }); users.cur = save.name; writeJSON(USERS_KEY, users); }
+if (users.cur && findUser(users.cur)) loadUser(users.cur);
+const persist = () => writeJSON(save.name && findUser(save.name) ? userKey(save.name) : SAVE_KEY, save);
 
 // ============ TELA CHEIA ============
 const root = document.documentElement;
@@ -1184,7 +1223,12 @@ function makeKart(color, pilotId, parent) {
   return { g, body, wheels, fw, flames, shield, emo, emoT: 0 };
 }
 
+const COELHO_CORES = [1, 8]; // azul e branco
 function stats(r) {
+  if (r.isPlayer && net.on) {
+    const bonus = save.pilot === 'coelho' && COELHO_CORES.includes(save.color) ? 1.25 : 1;
+    return { max: 52 * bonus, acc: 26, turn: 1.95 * D().turn, off: Math.max(.6, D().off) };
+  }
   if (r.isPlayer) return { max: 52 + save.up.motor * 4, acc: 26 + save.up.accel * 5, turn: (1.95 + save.up.pneu * .1) * D().turn, off: Math.max(.6 + save.up.pneu * .06, D().off) };
   return { max: r.aiMax * D().ai, acc: 30, turn: 2.1, off: .5 };
 }
@@ -1218,7 +1262,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye', 'avatar', 'diffScr', 'news'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye', 'avatar', 'diffScr', 'news', 'who', 'passScr', 'newPass'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -1833,6 +1877,8 @@ addEventListener('keydown', e => {
   if ((k === ' ' || k === 'e') && document.activeElement.tagName !== 'INPUT' && state === 'race' && player && player.item) { e.preventDefault(); useItem(player); }
   if (k === 'p' || k === 'escape') doPause();
   if (k === 'enter' && $('nameScr').classList.contains('on')) $('nameOk').click();
+  if (k === 'enter' && $('passScr').classList.contains('on')) $('passOk').click();
+  if (k === 'enter' && $('newPass').classList.contains('on')) $('npOk').click();
   if (k === 'f' && document.activeElement.tagName !== 'INPUT') isFS() ? exitFS() : enterFS();
 });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (KEYMAP[k]) input[KEYMAP[k]] = false; });
@@ -1903,13 +1949,53 @@ $('nameOk').onclick = async () => {
   if (!NAME_RE.test(n)) { $('nameMsg').textContent = 'Use de 3 a 16 letras, números ou _ (sem espaço).'; return; }
   if (!sb) { $('nameMsg').textContent = 'Sem conexão com o servidor. Tente de novo.'; return; }
   $('nameMsg').textContent = 'Registrando...';
-  const { data, error } = await sb.rpc('register_player', { p_name: n, p_token: save.token });
+  if (findUser(n)) { askPass(findUser(n).name); return; }
+  const token = save.name ? newToken() : save.token; // piloto novo = ID novo no servidor
+  const { data, error } = await sb.rpc('register_player', { p_name: n, p_token: token });
   if (error || !data) { $('nameMsg').textContent = 'Sem conexão. Confira a internet e tente de novo.'; return; }
   if (!data.ok) { $('nameMsg').textContent = data.error === 'taken' ? 'Esse nome já tem dono. Escolha outro!' : 'Nome inválido.'; return; }
-  save.name = data.name; persist(); showMeName(); Snd.click(); goMenu();
+  const keep = { music: save.music, sfx: save.sfx, gfx: save.gfx, seenV2: save.seenV2 };
+  const fresh = save.name ? Object.assign(freshSave(), keep) : save; // o primeiro piloto do aparelho fica com o progresso que já existia
+  users.list.push({ name: data.name, pass: DEF_PASS }); users.cur = data.name; writeJSON(USERS_KEY, users);
+  save = Object.assign(fresh, { name: data.name, token }); persist(); afterLogin(); Snd.click(); goNewPass();
 };
-$('changeName').onclick = goName;
-$('nameBack').onclick = () => goMenu();
+$('changeName').onclick = goWho;
+$('nameBack').onclick = () => users.list.length ? goWho() : goMenu();
+
+// ---- Pilotos deste aparelho e senhas ----
+function newToken() { const a = new Uint8Array(16); crypto.getRandomValues(a); return [...a].map(b => b.toString(16).padStart(2, '0')).join(''); }
+function afterLogin() { showMeName(); refreshSettings(); Snd.init(); Snd.music(save.music); if (save.gfx != null && QUAL[save.gfx] && QUAL[save.gfx] !== Q) setQuality(save.gfx); document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins); if ($('wins')) $('wins').textContent = save.wins; }
+function goWho() {
+  $('whoList').innerHTML = users.list.map(u => `<button class="pl ${save.name === u.name ? 'sel' : ''}" data-u="${esc(u.name)}" style="min-width:110px"><span>👤</span>${esc(u.name)}</button>`).join('') || '<div class="sub">Nenhum piloto ainda.</div>';
+  $('whoList').querySelectorAll('.pl').forEach(b => b.onclick = () => { Snd.click(); askPass(b.dataset.u); });
+  $('whoBack').style.display = save.name ? '' : 'none';
+  showScreen('who');
+}
+let passFor = null;
+function askPass(n) {
+  passFor = findUser(n).name;
+  $('passTitle').textContent = 'SENHA DE ' + passFor.toUpperCase();
+  $('passHint').textContent = findUser(passFor).pass === DEF_PASS ? 'Primeira vez? A senha padrão é 1 2 3 4' : '';
+  $('passIn').value = ''; $('passMsg').textContent = ''; showScreen('passScr'); setTimeout(() => $('passIn').focus(), 50);
+}
+$('passOk').onclick = () => {
+  const u = findUser(passFor);
+  if (!u || $('passIn').value !== u.pass) { $('passMsg').textContent = 'Senha errada. Tente de novo!'; return; }
+  persist(); loadUser(u.name); afterLogin(); Snd.click();
+  if (u.pass === DEF_PASS) goNewPass(); else goStart();
+};
+$('passBack').onclick = goWho;
+function goNewPass() { $('npWho').textContent = 'Piloto: ' + save.name; $('np1').value = $('np2').value = ''; $('npMsg').textContent = ''; showScreen('newPass'); }
+$('npOk').onclick = () => {
+  const a = $('np1').value, b = $('np2').value;
+  if (a.length < 4) { $('npMsg').textContent = 'A senha precisa ter pelo menos 4 letras ou números.'; return; }
+  if (a !== b) { $('npMsg').textContent = 'As duas senhas não são iguais.'; return; }
+  findUser(save.name).pass = a; writeJSON(USERS_KEY, users); Snd.click(); toast('Senha salva! 🔑', 1.5); goStart();
+};
+$('npLater').onclick = goStart;
+$('passBtn').onclick = () => { if (save.name && findUser(save.name)) goNewPass(); };
+$('whoNew').onclick = () => { Snd.click(); goName(); $('nameMsg').textContent = 'Crie o nome do novo piloto. Ele começa com a garagem zerada.'; };
+function goStart() { if (!save.seenV2) showScreen('news'); else goMenu(); }
 
 async function submitResult(track, ms, place) {
   if (!sb || !save.name || !ms) return null;
@@ -2346,7 +2432,7 @@ $('micBtn').onclick = toggleMic;
 $('hudMic').onclick = toggleMic;
 
 // ============ ATUALIZAÇÃO AUTOMÁTICA ============
-const GAME_VERSION = 9; // aumentar junto com version.json a cada atualização publicada
+const GAME_VERSION = 10; // aumentar junto com version.json a cada atualização publicada
 let newVersion = 0;
 async function checkUpdate() {
   try {
@@ -2370,7 +2456,9 @@ if (/[?&]v=/.test(location.search)) history.replaceState(null, '', location.path
 
 buildTrack(0);
 showMeName();
-if (!save.name) goName(); else if (!save.seenV2) showScreen('news'); else showScreen('menu');
+if (users.list.length > 1) goWho();          // mais de um piloto no aparelho: escolhe e digita a senha
+else if (!save.name) goName();
+else goStart();
 $('loading').remove();
 requestAnimationFrame(loop);
 })();
