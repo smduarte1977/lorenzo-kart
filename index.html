@@ -31,7 +31,8 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 #pos{font-size:clamp(40px,9vh,70px);line-height:1;color:#ffd23f}
 #pos small{font-size:.45em;color:#fff}
 #lap{font-size:clamp(16px,3.6vh,24px)}
-#spd{font-size:clamp(13px,2.8vh,18px);color:#9fe8ff}
+#spd{font-size:clamp(18px,4.6vh,30px);color:#9fe8ff;font-weight:bold;background:rgba(0,0,0,.35);border:2px solid rgba(159,232,255,.5);border-radius:12px;padding:0 10px;align-self:flex-start}
+#spd small{font-size:.55em;margin-left:3px}
 #hudTR{position:absolute;top:0;right:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .hbtns{display:flex;gap:8px}
 .icon-btn{pointer-events:auto;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.45);width:44px;height:44px;border-radius:12px;font-size:18px;display:flex;align-items:center;justify-content:center}
@@ -53,6 +54,21 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 #itemBtn{width:clamp(70px,19vh,92px);height:clamp(70px,19vh,92px);border-radius:20px;background:rgba(0,0,0,.4);border:3px dashed rgba(255,255,255,.4);font-size:clamp(30px,8vh,46px)}
 #itemBtn.ready{border:3px solid #ffd23f;background:rgba(255,210,63,.25);animation:glow .55s ease-in-out infinite alternate}
 #itemBtn.rolling{border:3px solid #fff;background:rgba(255,255,255,.18)}
+#bag{position:absolute;right:calc(100% + 8px);top:0;display:flex;flex-direction:row-reverse;flex-wrap:wrap-reverse;gap:6px;width:max-content;max-width:40vw;pointer-events:auto}
+.bagI{position:relative;width:clamp(46px,12vh,58px);height:clamp(46px,12vh,58px);border-radius:14px;border:3px solid #ffd23f;background:rgba(255,210,63,.22);font-size:clamp(22px,6vh,32px);display:flex;align-items:center;justify-content:center;touch-action:none}
+.cnt{position:absolute;right:-6px;top:-8px;background:#ff2d75;color:#fff;border:2px solid #fff;border-radius:10px;font:bold 13px system-ui,sans-serif;padding:0 5px;line-height:18px}
+#itemBtn{position:relative}
+.rcol{position:relative}
+#podium{background:radial-gradient(ellipse at 50% 30%,#3a2a7a,#0c0a26 75%);justify-content:flex-start;overflow:hidden}
+#podCv,#fxCv{position:absolute;inset:0;width:100%;height:100%}
+#fxCv{pointer-events:none;z-index:3}
+#podText{position:relative;z-index:4;margin-top:max(10px,env(safe-area-inset-top));font-size:clamp(20px,6.2vh,42px);color:#ffd23f;text-shadow:0 4px 0 #b3003c,0 0 22px #ff7b00;min-height:1.3em;padding:0 12px}
+#podText::after{content:'|';animation:blink .6s steps(1) infinite;color:#fff}
+#podText.done::after{content:''}
+@keyframes blink{50%{opacity:0}}
+.pn{position:absolute;z-index:4;transform:translate(-50%,0);font-size:clamp(13px,3.4vh,20px);color:#fff;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.5);border-radius:10px;padding:2px 10px;white-space:nowrap}
+#pn1{border-color:#ffd23f;color:#ffd23f;font-size:clamp(15px,4vh,24px)}
+#podOk{position:absolute;z-index:5;right:max(14px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom))}
 @keyframes glow{from{box-shadow:0 0 10px 2px #ffd23f}to{box-shadow:0 0 28px 10px #ffb300,inset 0 0 14px #fff}}
 
 /* ---------- Telas ---------- */
@@ -149,7 +165,7 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
 <div id="controls" class="safe">
   <div class="cgroup"><button class="cbtn" id="left">◀</button><button class="cbtn" id="right">▶</button></div>
   <div class="cgroup">
-    <div class="rcol"><span class="klabel desk">ESPAÇO</span><button class="cbtn" id="itemBtn"></button><button class="cbtn" id="brake">RÉ</button></div>
+    <div class="rcol"><span class="klabel desk">ESPAÇO</span><div id="bag"></div><button class="cbtn" id="itemBtn"></button><button class="cbtn" id="brake">RÉ</button></div>
     <button class="cbtn" id="gas">▲</button>
   </div>
 </div>
@@ -232,6 +248,15 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
   <div class="sub" id="resOnline"></div>
   <div class="row" id="resOnBtns" style="display:none"><button class="btn g s leaveRoomBtn">SAIR DA SALA</button></div>
   <div class="row" id="resBtns"><button class="btn" id="resNext">CONTINUAR</button><button class="btn b" id="resGarage">🔧 GARAGEM</button></div>
+</div>
+
+<!-- Pódio -->
+<div class="screen" id="podium">
+  <canvas id="podCv"></canvas>
+  <div id="podText"></div>
+  <div class="pn" id="pn1"></div><div class="pn" id="pn2"></div><div class="pn" id="pn3"></div>
+  <canvas id="fxCv"></canvas>
+  <button class="btn y" id="podOk">CONTINUAR ▶</button>
 </div>
 
 <!-- Tchau -->
@@ -483,6 +508,8 @@ const Snd = (() => {
   return {
     init, applySettings, music, engineStart, engineUpdate, engineStop,
     click: () => tone(880, .06, 'square', .12),
+    fanfare: () => [[523, 0], [659, .14], [784, .28], [1047, .42], [784, .62], [1047, .76]].forEach(([f, d]) => tone(f, d > .7 ? .7 : .18, 'square', .18, 0, 0, ac && ac.currentTime + d)),
+    pop: () => burst(.45, 'lowpass', 900 + Math.random() * 900, .35, 0, 0, 1),
     beep: hi => tone(hi ? 988 : 523, hi ? .5 : .22, 'square', .25),
     tick: () => tone(1200 + Math.random() * 600, .04, 'square', .08),
     pickup: () => [660, 880, 1320].forEach((f, i) => tone(f, .12, 'square', .15, 0, 0, ac && ac.currentTime + i * .06)),
@@ -538,7 +565,8 @@ function shapePts(sh) {
 }
 TRACKS.forEach(t => { if (!t.pts) t.pts = shapePts(t.shape); });
 const DEMO = location.hash === '#demo';
-const SC = 1.15, ROAD_W = 20;
+const SC = 2.3, ROAD_W = 20; // 2.3 = pistas com o dobro do tamanho (versão 11)
+const REC_TRACK = ti => ti + 100; // recordes das pistas grandes ficam separados dos antigos
 let LAPS = 3;
 const KART_COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00, 0xff4fa3, 0x00bcd4, 0xf5f5f5, 0x333333];
 const NAMES = ['Você', 'Rex', 'Luna', 'Faísca', 'Zé', 'Bia', 'Dudu', 'Nina'];
@@ -886,7 +914,7 @@ function buildTrack(ti) {
     c.fillStyle = '#7a3e00'; c.fillText('?', w / 2 + 8, h / 2 + 16); c.fillStyle = '#fff'; c.fillText('?', w / 2, h / 2 + 8);
   });
   const qGeo = new RoundedBoxGeometry(2.2, 2.2, 2.2, 4, .28), qMat = new THREE.MeshPhysicalMaterial({ map: qTex, roughness: .25, clearcoat: 1, clearcoatRoughness: .05, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: .45 });
-  [0.13, 0.36, 0.56, 0.79, 0.94].forEach(f => {
+  [0.07, 0.17, 0.28, 0.38, 0.48, 0.58, 0.68, 0.78, 0.88, 0.96].forEach(f => {
     const i = Math.floor(f * N);
     [-6.6, -2.2, 2.2, 6.6].forEach(l => {
       const m = new THREE.Mesh(qGeo, qMat); m.castShadow = true;
@@ -903,7 +931,7 @@ function buildTrack(ti) {
   });
   const padGeo = new THREE.PlaneGeometry(5, 7.5); padGeo.rotateX(-PI / 2);
   padMatG = new THREE.MeshStandardMaterial({ map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 1, roughness: .4 });
-  [0.06, 0.24, 0.46, 0.67, 0.86].forEach(f => {
+  [0.03, 0.12, 0.22, 0.33, 0.43, 0.53, 0.63, 0.73, 0.83, 0.92].forEach(f => {
     const i = Math.floor(f * N), l = pick([-5, 5]);
     const m = new THREE.Mesh(padGeo, padMatG); const x = px[i] + nx[i] * l, z = pz[i] + nz[i] * l;
     m.position.set(x, 0.07, z); m.rotation.y = Math.atan2(tx[i], tz[i]); m.receiveShadow = true; world.add(m);
@@ -916,7 +944,7 @@ let padMatG = null;
 
 function buildDeco(th) {
   const spots = []; let tries = 0;
-  while (spots.length < 240 && tries < 4000) {
+  while (spots.length < 420 && tries < 7000) {
     tries++;
     const i = Math.floor(Math.random() * N), s = Math.random() < .5 ? -1 : 1, d = ROAD_W / 2 + rnd(17, 90);
     const x = px[i] + nx[i] * d * s, z = pz[i] + nz[i] * d * s;
@@ -1220,7 +1248,7 @@ function makeKart(color, pilotId, parent) {
   const emo = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
   emo.position.y = 4.8; emo.scale.set(2.4, 2.4, 1); emo.visible = false; g.add(emo);
   (parent || world).add(g);
-  return { g, body, wheels, fw, flames, shield, emo, emoT: 0 };
+  return { g, body, wheels, fw, flames, shield, emo, emoT: 0, pid: pilotId };
 }
 
 const COELHO_CORES = [1, 8]; // azul e branco
@@ -1246,7 +1274,7 @@ function spawnRacers(ti) {
     const aiPilots = PILOTS.map(p => p.id).filter(id => id !== save.pilot);
     const kart = makeKart(color, who === 0 ? save.pilot : aiPilots[(who * 3 + ti) % aiPilots.length]);
     const r = { color, id: who, name: NAMES[who], isPlayer: who === 0, kart, x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat,
-      h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
+      h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, bag: [], rolling: 0, itemT: 0,
       spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0,
       aiOff: rnd(-4, 4), aiOffT: 0, aiMax: 50 + Math.min(ti, 14) * 1.35 + rnd(0, 6) };
     r.prog = r.lap * N + r.idx - N;
@@ -1262,7 +1290,7 @@ const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const input = { left: false, right: false, gas: false, brake: false };
 
 function showScreen(id) {
-  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye', 'avatar', 'diffScr', 'news', 'who', 'passScr', 'newPass'].forEach(s => $(s).classList.toggle('on', s === id));
+  ['menu', 'select', 'garage', 'paused', 'result', 'nameScr', 'records', 'online', 'room', 'vote', 'confirmExit', 'bye', 'avatar', 'diffScr', 'news', 'who', 'passScr', 'newPass', 'podium'].forEach(s => $(s).classList.toggle('on', s === id));
   const racing = id === null;
   $('hud').classList.toggle('on', racing); $('controls').classList.toggle('on', racing);
   document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins);
@@ -1291,13 +1319,18 @@ function rollItem(r) {
   if (!r.isPlayer && ATTACKS[it] && Math.random() > D().atk) it = pick(['turbo', 'turbo', 'escudo']); // bots atacam menos no fácil/médio
   return it;
 }
+// O jogador acumula itens: cada caixinha soma mais um (tipos diferentes ou repetidos = 2x, 3x...)
 function giveItem(r) {
-  if (r.item || r.rolling > 0) return;
+  if (r.isPlayer ? r.rolling > 0 : (r.item || r.rolling > 0)) return;
   if (r.isPlayer) { r.rolling = 1.1; Snd.pickup(); }
   else { r.item = rollItem(r); r.itemT = rnd(D().itemT[0], D().itemT[1]); }
 }
-function useItem(r) {
-  const it = r.item; if (!it) return; r.item = null;
+function useItem(r, want) {
+  let it = r.item; if (!it) return;
+  if (r.isPlayer) {
+    const bag = r.bag || (r.bag = []); const k = want ? bag.indexOf(want) : 0;
+    if (k < 0) return; it = bag.splice(k, 1)[0]; r.item = bag[0] || null;
+  } else r.item = null;
   if (r.isPlayer) { toast(ITEM_NAME[it]); setItemUI(); }
   const near = r.isPlayer || Math.hypot(r.x - player.x, r.z - player.z) < 40;
   if (it === 'turbo' && near) Snd.boost(); else if (it === 'banana' && near) Snd.banana(); else if (it === 'missil' && near) Snd.missile(); else if (it === 'raio') Snd.thunder();
@@ -1418,10 +1451,14 @@ function hit(r, t) {
   if (r.isPlayer || Math.hypot(r.x - player.x, r.z - player.z) < 30) Snd.hit();
   if (r.isPlayer) { toast('RODOU! 💫'); try { navigator.vibrate && navigator.vibrate(150); } catch (e) {} }
 }
+function bagGroups(bag) { const g = []; (bag || []).forEach(it => { const e = g.find(x => x.it === it); if (e) e.n++; else g.push({ it, n: 1 }); }); return g; }
 function setItemUI() {
   const b = $('itemBtn'); if (!player) return;
   b.classList.toggle('ready', !!player.item); b.classList.toggle('rolling', player.rolling > 0);
-  if (!player.rolling) b.textContent = player.item ? ICON[player.item] : '';
+  const gr = bagGroups(player.bag);
+  if (!player.rolling) b.innerHTML = gr.length ? ICON[gr[0].it] + (gr[0].n > 1 ? `<span class="cnt">${gr[0].n}x</span>` : '') : '';
+  $('bag').innerHTML = gr.slice(1).map(g => `<button class="bagI" data-it="${g.it}">${ICON[g.it]}${g.n > 1 ? `<span class="cnt">${g.n}x</span>` : ''}</button>`).join('');
+  $('bag').querySelectorAll('.bagI').forEach(e => e.addEventListener('pointerdown', ev => { ev.preventDefault(); ev.stopPropagation(); if (state === 'race' && player) useItem(player, e.dataset.it); }));
 }
 
 // ============ NÍVEIS DE DIFICULDADE ============
@@ -1688,7 +1725,7 @@ function updateHud() {
   const s = p + '|' + lap + '|' + Math.round(player.v * 2.6);
   if (s !== lastHud) {
     lastHud = s; $('pos').innerHTML = p + '<small>º/' + racers.length + '</small>';
-    $('lap').textContent = 'VOLTA ' + lap + '/' + LAPS; $('spd').textContent = Math.max(0, Math.round(player.v * 2.6)) + ' km/h';
+    $('lap').textContent = 'VOLTA ' + lap + '/' + LAPS; $('spd').innerHTML = Math.max(0, Math.round(player.v * 2.6)) + '<small>km/h</small>';
   }
   mctx.clearRect(0, 0, 260, 200); mctx.drawImage(miniBg, 0, 0);
   racers.forEach(r => {
@@ -1711,12 +1748,154 @@ function showResult() {
   const tag = player.finishMs ? '⏱️ ' + fmtMs(player.finishMs) + (player.bestLap ? ' · melhor volta ' + fmtMs(player.bestLap) : '') : '';
   $('resOnline').textContent = net.on ? 'Próxima votação em alguns segundos...' : '';
   $('resBtns').style.display = net.on ? 'none' : ''; $('resOnBtns').style.display = net.on ? '' : 'none';
-  if (player.bestLap) submitResult(curTrack, player.bestLap, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE DE VOLTA: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde de volta nesta pista: ' + fmtMs(d.best_ms); });
+  if (player.bestLap) submitResult(REC_TRACK(curTrack), player.bestLap, place).then(d => { if (d && d.ok) $('resCoins').innerHTML += d.record ? '<br>⭐ NOVO RECORDE DE VOLTA: ' + fmtMs(d.best_ms) + '!' : '<br>Seu recorde de volta nesta pista: ' + fmtMs(d.best_ms); });
   $('resTitle').textContent = place === 1 ? '🏆 VOCÊ VENCEU!' : place <= 3 ? 'PÓDIO! ' + place + 'º LUGAR' : place + 'º LUGAR';
   $('resList').innerHTML = order.map((r, k) => `<div class="${r.isPlayer ? 'me' : ''}">${k + 1}º ${esc(r.name)}${net.on && net.finishes[r.id] ? ' <small>' + fmtMs(net.finishes[r.id]) + '</small>' : ''}</div>`).join('');
   $('resCoins').innerHTML = tag + ' · +' + prize + ' 🪙' + (net.on ? '' : unlockMsg);
-  showScreen('result');
+  showPodium(order);
 }
+
+// ============ PÓDIO: 1º, 2º e 3º (com bots), taça, confetes e fogos multicoloridos ============
+// Padrão: fogos e confetes com TODAS as cores do jogo (multicor), mais estrelinhas brilhando.
+const FX_COLORS = ['#ffd23f', '#ffffff', ...KART_COLORS.map(c => '#' + c.toString(16).padStart(6, '0'))];
+let pod = null;
+function makeTrophy() {
+  const gold = new THREE.MeshStandardMaterial({ color: 0xffc21a, metalness: 1, roughness: .18 });
+  const t = new THREE.Group();
+  const cup = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.55, .05], [.62, .25], [.5, .3], [.16, .45], [.14, .9], [.35, 1.05], [.75, 1.35], [.9, 2.1], [.82, 2.12], [.66, 1.45], [0, 1.3]].map(([x, y]) => new THREE.Vector2(x, y)), 40), gold);
+  t.add(cup);
+  [-1, 1].forEach(sd => { const h = new THREE.Mesh(new THREE.TorusGeometry(.38, .07, 10, 24, PI * 1.1), gold); h.position.set(sd * .9, 1.65, 0); h.rotation.z = sd > 0 ? -PI / 2 + .1 : PI / 2 - .1; t.add(h); });
+  const star = new THREE.Mesh(new THREE.OctahedronGeometry(.3, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff3a0, emissiveIntensity: 1.5 }));
+  star.position.y = 2.6; t.add(star); t.userData.star = star;
+  return t;
+}
+function podiumNum(n, col) {
+  const tex = canvasTex(256, 256, (c, w, h) => { c.fillStyle = col; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = 'bold 170px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(n, w / 2, h / 2 + 10); });
+  return new THREE.MeshStandardMaterial({ map: tex, roughness: .5 });
+}
+function initPod() {
+  const cv = $('podCv'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  r.toneMapping = THREE.NeutralToneMapping;
+  const sc = new THREE.Scene();
+  sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), .04).texture;
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x443366, 1.1));
+  const d = new THREE.DirectionalLight(0xfff4e0, 2.6); d.position.set(4, 12, 10); sc.add(d);
+  const cam = new THREE.PerspectiveCamera(40, 1, .1, 200); cam.position.set(0, 6.5, 21); cam.lookAt(0, 3.2, 0);
+  const steps = [], H = [3, 2, 1.3], X = [0, -6.2, 6.2], COL = ['#e0a800', '#9aa4b2', '#c46a2b'];
+  const side = new THREE.MeshStandardMaterial({ color: 0xf5f5ff, roughness: .4 });
+  for (let k = 0; k < 3; k++) {
+    const num = podiumNum(k + 1, COL[k]);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(5.6, H[k], 5), [side, side, side, side, num, side]);
+    m.position.set(X[k], H[k] / 2, 0); sc.add(m); steps.push({ x: X[k], top: H[k] });
+  }
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(20, 48), new THREE.MeshStandardMaterial({ color: 0x2a1f5c, roughness: .9 }));
+  floor.rotation.x = -PI / 2; sc.add(floor);
+  pod = { r, sc, cam, steps, karts: [], trophy: makeTrophy(), raf: 0, t: 0 };
+}
+function showPodium(order) {
+  showScreen('podium');
+  try { if (!pod) initPod(); } catch (e) { showScreen('result'); return; }
+  const top = order.slice(0, 3);
+  pod.karts.forEach(k => pod.sc.remove(k.g)); pod.karts = [];
+  top.forEach((rc, k) => {
+    const kt = makeKart(rc.color, rc.kart.pid || 'menino', pod.sc);
+    kt.g.position.set(pod.steps[k].x, pod.steps[k].top, 0); kt.g.rotation.y = k === 1 ? .35 : k === 2 ? -.35 : 0;
+    kt.g.scale.setScalar(k === 0 ? 1.15 : 1);
+    pod.karts.push({ g: kt.g, base: pod.steps[k].top, k });
+    const nm = rc.isPlayer ? (save.name || 'Você') : rc.name;
+    $('pn' + (k + 1)).textContent = ['🥇', '🥈', '🥉'][k] + ' ' + nm;
+  });
+  for (let k = top.length; k < 3; k++) $('pn' + (k + 1)).textContent = '';
+  if (pod.karts[0]) {
+    const g0 = pod.karts[0].g, box = new THREE.Box3(), tmp = new THREE.Box3(); g0.updateWorldMatrix(true, true);
+    g0.traverse(o => { let vis = true; for (let q = o; q; q = q.parent) if (!q.visible) vis = false; if (vis && o.isMesh) box.union(tmp.setFromObject(o)); });
+    pod.trophy.position.set(0, (box.max.y - pod.karts[0].base) / g0.scale.y + .1, .3); pod.trophy.scale.setScalar(.75);
+    pod.karts[0].g.add(pod.trophy);
+  }
+  const win = top[0], me = win && win.isPlayer;
+  const wn = win ? (win.isPlayer ? (save.name || 'Você') : win.name) : '';
+  typeText(me ? wn + ', você é o novo campeão!' : wn + ' é o campeão!');
+  fxStart(); Snd.fanfare();
+  cancelAnimationFrame(pod.raf); let last = performance.now(); pod.t = 0;
+  const tick = now => {
+    if (!$('podium').classList.contains('on')) { fxStop(); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now; pod.t += dt;
+    const w = innerWidth, h = innerHeight; if (pod.r.domElement.width !== Math.round(w * pod.pr) || pod.w !== w || pod.h !== h) {
+      pod.pr = Math.min(window.devicePixelRatio || 1, 2); pod.w = w; pod.h = h; pod.r.setPixelRatio(pod.pr); pod.r.setSize(w, h, false);
+      pod.cam.aspect = w / h; pod.cam.fov = w / h < 1.3 ? 52 : 40; pod.cam.updateProjectionMatrix();
+    }
+    pod.karts.forEach(k => {
+      if (k.k === 0) { const j = Math.abs(Math.sin(pod.t * 5.5)); k.g.position.y = k.base + j * 1.4; k.g.rotation.z = Math.sin(pod.t * 5.5) * .08; k.g.rotation.y = Math.sin(pod.t * 1.3) * .35; }
+      else k.g.position.y = k.base + Math.abs(Math.sin(pod.t * 3 + k.k)) * .25;
+    });
+    pod.trophy.rotation.y += dt * 1.8; pod.trophy.userData.star.rotation.y += dt * 4;
+    pod.r.render(pod.sc, pod.cam);
+    const v = new THREE.Vector3();
+    pod.steps.forEach((st, k) => { v.set(st.x, .25, 2.6).project(pod.cam); const e = $('pn' + (k + 1)); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h) + 'px'; });
+    fxTick(dt);
+    pod.raf = requestAnimationFrame(tick);
+  };
+  pod.raf = requestAnimationFrame(tick);
+}
+let typeTimer = 0;
+function typeText(txt) {
+  const e = $('podText'); clearInterval(typeTimer); e.textContent = ''; e.classList.remove('done'); let i = 0;
+  typeTimer = setInterval(() => { i++; e.textContent = txt.slice(0, i); if (i % 2) Snd.tick(); if (i >= txt.length) { clearInterval(typeTimer); e.classList.add('done'); } }, 70);
+}
+// ---- fogos de artifício, confetes e estrelinhas (canvas 2D por cima) ----
+const pfx = { on: false, conf: [], parts: [], rockets: [], stars: [], tNext: 0 };
+function fxStart() {
+  const c = $('fxCv'); pfx.ctx = c.getContext('2d'); pfx.on = true; pfx.conf = []; pfx.parts = []; pfx.rockets = []; pfx.stars = []; pfx.tNext = 0;
+  for (let i = 0; i < 160; i++) pfx.conf.push(newConf(true));
+  for (let i = 0; i < 26; i++) pfx.stars.push({ x: Math.random(), y: Math.random() * .75, s: rnd(6, 16), ph: Math.random() * TAU, c: pick(FX_COLORS) });
+}
+function fxStop() { pfx.on = false; }
+function newConf(any) { return { x: Math.random(), y: any ? rnd(-1, 0) : rnd(-.15, -.02), vx: rnd(-.05, .05), vy: rnd(.12, .3), r: Math.random() * TAU, vr: rnd(-8, 8), w: rnd(6, 12), h: rnd(10, 18), c: pick(FX_COLORS), star: Math.random() < .18 }; }
+function drawStar(c, x, y, r) { c.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - PI / 2, rr = i % 2 ? r * .42 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
+function launch() {
+  // fogos grandes nos cantos (esquerda/direita, alto), às vezes no meio
+  const sideP = pick([0, 1, 0, 1, .5]), x = sideP === .5 ? rnd(.35, .65) : sideP ? rnd(.78, .95) : rnd(.05, .22);
+  pfx.rockets.push({ x, y: 1.02, vy: -rnd(.9, 1.15), ty: rnd(.12, .38), c: pick(FX_COLORS) });
+}
+function fxTick(dt) {
+  if (!pfx.on) return;
+  const cv = $('fxCv'), w = innerWidth, h = innerHeight, pr = Math.min(window.devicePixelRatio || 1, 2);
+  if (cv.width !== Math.round(w * pr)) { cv.width = Math.round(w * pr); cv.height = Math.round(h * pr); }
+  const c = pfx.ctx; c.setTransform(pr, 0, 0, pr, 0, 0); c.clearRect(0, 0, w, h);
+  pfx.tNext -= dt; if (pfx.tNext <= 0) { launch(); if (Math.random() < .4) launch(); pfx.tNext = rnd(.35, .8); }
+  // estrelinhas brilhando
+  pfx.stars.forEach(st => { st.ph += dt * 5; const a = (Math.sin(st.ph) + 1) / 2; c.globalAlpha = .25 + a * .75; c.fillStyle = st.c; drawStar(c, st.x * w, st.y * h, st.s * (.6 + a * .6)); });
+  c.globalAlpha = 1;
+  // foguetes subindo
+  pfx.rockets = pfx.rockets.filter(rk => {
+    rk.y += rk.vy * dt; c.fillStyle = '#fff'; c.beginPath(); c.arc(rk.x * w, rk.y * h, 3, 0, TAU); c.fill();
+    c.fillStyle = rk.c; c.globalAlpha = .6; c.fillRect(rk.x * w - 1, rk.y * h, 2, 18); c.globalAlpha = 1;
+    if (rk.y > rk.ty) return true;
+    const big = Math.min(w, h) * rnd(.28, .42), n = 90, multi = Math.random() < .5;
+    for (let i = 0; i < n; i++) { const a = i / n * TAU + rnd(-.05, .05), sp = big * rnd(.55, 1); pfx.parts.push({ x: rk.x * w, y: rk.y * h, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: rnd(1.1, 1.8), max: 1.8, c: multi ? pick(FX_COLORS) : rk.c, star: Math.random() < .2 }); }
+    try { Snd.pop(); } catch (e) {}
+    return false;
+  });
+  // faíscas da explosão
+  c.globalCompositeOperation = 'lighter';
+  pfx.parts = pfx.parts.filter(pt => {
+    pt.life -= dt; if (pt.life <= 0) return false;
+    pt.vx *= (1 - 1.6 * dt); pt.vy = pt.vy * (1 - 1.6 * dt) + 90 * dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+    c.globalAlpha = Math.min(1, pt.life / .6); c.fillStyle = pt.c;
+    if (pt.star) drawStar(c, pt.x, pt.y, 5); else { c.beginPath(); c.arc(pt.x, pt.y, 2.6, 0, TAU); c.fill(); }
+    return true;
+  });
+  c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  // confetes caindo
+  pfx.conf.forEach((cf, i) => {
+    cf.y += cf.vy * dt; cf.x += cf.vx * dt + Math.sin(cf.r) * .02 * dt; cf.r += cf.vr * dt;
+    if (cf.y > 1.05) pfx.conf[i] = newConf(false);
+    c.save(); c.translate(cf.x * w, cf.y * h); c.rotate(cf.r); c.fillStyle = cf.c;
+    if (cf.star) drawStar(c, 0, 0, cf.w * .9); else { c.scale(1, Math.abs(Math.cos(cf.r * 1.3)) + .15); c.fillRect(-cf.w / 2, -cf.h / 2, cf.w, cf.h); }
+    c.restore();
+  });
+}
+$('podOk').onclick = () => { Snd.click(); fxStop(); showScreen('result'); };
 
 // ============ MENUS ============
 function renderTracks() {
@@ -1902,8 +2081,12 @@ function loop(now) {
     collideKarts(); updateWorld(dt, t); updateCamera(dt);
     if (player.rolling > 0) {
       player.rolling -= dt; tickT -= dt; if (tickT <= 0) { tickT = .08; Snd.tick(); }
-      $('itemBtn').textContent = ICON[pick(Object.keys(ICON))]; $('itemBtn').classList.add('rolling');
-      if (player.rolling <= 0) { player.rolling = 0; player.item = rollItem(player); setItemUI(); }
+      $('itemBtn').innerHTML = ICON[pick(Object.keys(ICON))]; $('itemBtn').classList.add('rolling');
+      if (player.rolling <= 0) {
+        player.rolling = 0; const it = rollItem(player); (player.bag || (player.bag = [])).push(it);
+        player.item = player.bag[0]; const n = player.bag.filter(x => x === it).length;
+        if (n > 1) toast(ICON[it] + ' ' + n + 'x!', .9); setItemUI();
+      }
     }
     updateHud();
     if (endT > 0) { endT -= dt; if (endT <= 0) showResult(); }
@@ -2007,7 +2190,7 @@ async function renderRecords(tab) {
   $('recTitle').textContent = tab === 'w' ? 'MAIS VITÓRIAS' : 'MELHOR VOLTA: ' + TRACKS[tab].name.toUpperCase();
   $('recList').innerHTML = 'Carregando...';
   if (!sb) { $('recList').innerHTML = 'Sem conexão.'; return; }
-  const { data, error } = tab === 'w' ? await sb.rpc('top_wins') : await sb.rpc('leaderboard', { p_track: tab });
+  const { data, error } = tab === 'w' ? await sb.rpc('top_wins') : await sb.rpc('leaderboard', { p_track: REC_TRACK(tab) });
   if (error) { $('recList').innerHTML = 'Sem conexão.'; return; }
   if (!data || !data.length) { $('recList').innerHTML = 'Ninguém correu ainda. Seja o primeiro!'; return; }
   const me = (save.name || '').toLowerCase();
@@ -2213,7 +2396,7 @@ function spawnOnlineRacers(parts, bots) {
       const b = botMap[id], i = (N - 5 - Math.floor(k / 2) * 7 + N * 2) % N, lat = k % 2 ? -4.5 : 4.5;
       const color = KART_COLORS.find(c => !usedColors.includes(c)) || COLORS[k % COLORS.length]; usedColors.push(color);
       const r = { color, id, name: b.name, isPlayer: false, isBot: true, isRemote: !isHost(), kart: makeKart(color, b.pilot),
-        x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
+        x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, bag: [], rolling: 0, itemT: 0,
         spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0, aiOff: rnd(-4, 4), aiOffT: 0, aiMax: 50 + Math.min(net.track, 14) * 1.35 + rnd(0, 5) };
       r.prog = r.idx - N; r.net = { x: r.x, z: r.z, h: r.h, v: 0, t: 0 };
       racers.push(r); return;
@@ -2225,7 +2408,7 @@ function spawnOnlineRacers(parts, bots) {
     usedColors.push(color);
     const kart = makeKart(color, me ? save.pilot : (pl.pilot || 'menino'));
     const r = { color, id, name: me ? save.name : (pl.name || id), isPlayer: me, isRemote: !me, kart,
-      x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, rolling: 0, itemT: 0,
+      x: px[i] + nx[i] * lat, z: pz[i] + nz[i] * lat, h: Math.atan2(tx[i], tz[i]), v: 0, idx: i, lap: 0, prog: 0, item: null, bag: [], rolling: 0, itemT: 0,
       spin: 0, spinA: 0, boost: 0, slow: 0, finished: false, place: 0, steer: 0, aiOff: 0, aiOffT: 0, aiMax: 50 };
     r.prog = r.idx - N; r.net = { x: r.x, z: r.z, h: r.h, v: 0, t: 0 };
     racers.push(r); if (me) player = r;
@@ -2247,7 +2430,7 @@ function botify(id) {
   if (isHost()) takeOverBot(r);
 }
 function takeOverBot(r) {
-  r.isRemote = false; r.isPlayer = false; r.item = null; r.rolling = 0; r.aiOff = rnd(-4, 4); r.aiOffT = 0;
+  r.isRemote = false; r.isPlayer = false; r.item = null; r.bag = []; r.rolling = 0; r.aiOff = rnd(-4, 4); r.aiOffT = 0;
   r.aiMax = 50 + Math.min(net.track, 14) * 1.35 + rnd(0, 5);
 }
 function removeRemote(id) {
@@ -2432,7 +2615,7 @@ $('micBtn').onclick = toggleMic;
 $('hudMic').onclick = toggleMic;
 
 // ============ ATUALIZAÇÃO AUTOMÁTICA ============
-const GAME_VERSION = 10; // aumentar junto com version.json a cada atualização publicada
+const GAME_VERSION = 11; // aumentar junto com version.json a cada atualização publicada
 let newVersion = 0;
 async function checkUpdate() {
   try {
@@ -2459,6 +2642,7 @@ showMeName();
 if (users.list.length > 1) goWho();          // mais de um piloto no aparelho: escolhe e digita a senha
 else if (!save.name) goName();
 else goStart();
+if (location.hash === '#teste') window.__kart = { startRace, showResult, get racers() { return racers; }, get player() { return player; }, giveItem, setItemUI, get state() { return state; }, set state(v) { state = v; } };
 $('loading').remove();
 requestAnimationFrame(loop);
 })();
