@@ -1,6 +1,6 @@
 // Lorenzo Kart — service worker: permite instalar como app e abrir sem internet.
 // Sempre tenta a rede primeiro (para receber atualizações) e usa a cópia guardada se estiver offline.
-const CACHE = 'lorenzo-kart-v17';
+const CACHE = 'lorenzo-kart-v18';
 const CORE = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

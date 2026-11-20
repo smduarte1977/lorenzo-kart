@@ -449,8 +449,10 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 (() => {
 const $ = id => document.getElementById(id);
-const vvW = () => window.visualViewport && /iP(hone|ad|od)|Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1 ? visualViewport.width : innerWidth;
-const vvH = () => window.visualViewport && /iP(hone|ad|od)|Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1 ? visualViewport.height : innerHeight;
+const iosVV = () => window.visualViewport && /iP(hone|ad|od)|Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
+const iosFull = () => { const ae = document.activeElement; return !(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) && visualViewport.scale <= 1.01; };
+const vvW = () => iosVV() ? (iosFull() ? Math.max(visualViewport.width, innerWidth, document.documentElement.clientWidth) : visualViewport.width) : innerWidth;
+const vvH = () => iosVV() ? (iosFull() ? Math.max(visualViewport.height, innerHeight, document.documentElement.clientHeight) : visualViewport.height) : innerHeight;
 const VW = () => document.documentElement.classList.contains('rot') ? vvH() : vvW();
 const VH = () => document.documentElement.classList.contains('rot') ? vvW() : vvH();
 const PI = Math.PI, TAU = PI * 2;
@@ -493,9 +495,17 @@ if (IOS) document.documentElement.classList.add('ios');
 function setUnits() {
   const h = document.documentElement;
   if (IOS) {
-    const vv = window.visualViewport, w = vv ? vv.width : innerWidth, ht = vv ? vv.height : innerHeight;
+    // No iPhone, quando o Safari esconde a barra (tela cheia), o visualViewport às vezes continua com a altura antiga:
+    // o jogo ficava mais baixo que a tela, com faixa preta embaixo. Agora usa a MAIOR área disponível,
+    // a não ser com o teclado aberto (digitando nome/senha) ou com zoom, quando segue a área visível.
+    const vv = window.visualViewport, ae = document.activeElement;
+    const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
+    const zoomed = vv && vv.scale > 1.01;
+    let w = vv ? vv.width : innerWidth, ht = vv ? vv.height : innerHeight, top = 0, left = 0;
+    if (typing || zoomed) { top = vv ? vv.offsetTop : 0; left = vv ? vv.offsetLeft : 0; }
+    else { w = Math.max(w, innerWidth, h.clientWidth); ht = Math.max(ht, innerHeight, h.clientHeight); }
     h.style.setProperty('--appW', w + 'px'); h.style.setProperty('--appH', ht + 'px');
-    h.style.setProperty('--appTop', (vv ? vv.offsetTop : 0) + 'px'); h.style.setProperty('--appLeft', (vv ? vv.offsetLeft : 0) + 'px');
+    h.style.setProperty('--appTop', top + 'px'); h.style.setProperty('--appLeft', left + 'px');
   }
   h.style.setProperty('--gh', VH() / 100 + 'px'); h.style.setProperty('--gw', VW() / 100 + 'px');
 }
@@ -532,6 +542,7 @@ if (window.visualViewport) {
   visualViewport.addEventListener('scroll', () => { fixScroll(); setUnits(); });
 }
 document.addEventListener('focusin', () => { if (gameLocked) setTimeout(fixScroll, 30); });
+document.addEventListener('focusout', () => setTimeout(() => { fixScroll(); setUnits(); dispatchEvent(new Event('resize')); }, 250));
 document.addEventListener('fullscreenchange', () => setTimeout(() => { fixScroll(); setUnits(); dispatchEvent(new Event('resize')); }, 150));
 try { screen.orientation.addEventListener('change', () => setTimeout(applyLock, 80)); } catch (e) {}
 // se a tela cheia cair (gesto na borda, notificação), volta no próximo toque, sem precisar girar o celular
@@ -2488,7 +2499,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   if (scrollY || scrollX || (window.visualViewport && visualViewport.offsetTop > 0 && visualViewport.scale <= 1.01)) fixScroll();
   if (IOS && (iosT = (iosT || 0) + 1) % 15 === 0) { // iPhone: confere 4x por segundo se a área visível mudou
-    const vv = window.visualViewport, k = vv ? vv.width + 'x' + vv.height + '@' + vv.offsetTop : '';
+    const vv = window.visualViewport, k = (vv ? vv.width + 'x' + vv.height + '@' + vv.offsetTop : '') + '|' + innerWidth + 'x' + innerHeight + '|' + document.documentElement.clientHeight;
     if (k !== iosK) { iosK = k; setUnits(); dispatchEvent(new Event('resize')); }
   }
   const rdt = (now - last) / 1000, dt = Math.min(rdt, 1 / 20); last = now; const t = now / 1000;
@@ -3137,7 +3148,7 @@ $('micBtn').onclick = toggleMic;
 $('hudMic').onclick = toggleMic;
 
 // ============ ATUALIZAÇÃO AUTOMÁTICA ============
-const GAME_VERSION = 17; // aumentar junto com version.json a cada atualização publicada
+const GAME_VERSION = 18; // aumentar junto com version.json a cada atualização publicada
 let newVersion = 0;
 async function checkUpdate() {
   try {
