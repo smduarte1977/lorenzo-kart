@@ -215,7 +215,8 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
     <button class="btn y" id="play">JOGAR SOZINHO</button>
     <button class="btn" id="onlineBtn">🌐 CORRER ONLINE</button>
   </div>
-  <div class="row"><button class="btn b s" id="garageBtn">🔧 GARAGEM</button><button class="btn b s" id="recBtn">🏆 RECORDES</button><button class="btn g s" id="quitGame">🚪 SAIR DO JOGO</button></div>
+  <div class="row"><button class="btn b s" id="garageBtn">🔧 GARAGEM</button><button class="btn b s" id="recBtn">🏆 RECORDES</button><button class="btn b s" id="parentsBtn">👨‍👩‍👦 PAIS</button><button class="btn g s" id="quitGame">🚪 SAIR DO JOGO</button></div>
+  <div class="row"><button class="btn y s" id="installBtn" style="display:none">📲 INSTALAR O APP</button></div>
   <div class="keys desk">No computador: <b>←</b><b>→</b> virar · <b>↑</b> acelerar · <b>↓</b> ré · <b>ESPAÇO</b> ou <b>E</b> jogar item (banana, míssil, raio, turbo) · <b>P</b> pausa · <b>C</b> configurações · <b>F</b> tela cheia</div>
   <div class="row"><button class="btn s" id="menuSet">🔧 CONFIGURAÇÕES</button><button class="btn s b musBtn"></button><button class="btn s b sfxBtn"></button><button class="btn s y gfxBtn"></button></div>
   <a class="v1link" href="v1/">↩ celular travando? jogue a versão 1 (mais leve)</a>
@@ -314,7 +315,7 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
 <!-- Tchau -->
 <div class="screen" id="bye">
   <h1>ATÉ A PRÓXIMA!</h1>
-  <div class="sub">O seu progresso foi salvo neste aparelho.</div>
+  <div class="sub">O seu progresso foi salvo. Entre com o seu nome e senha em qualquer celular.</div>
   <div class="row"><button class="btn" id="byeBack">VOLTAR A JOGAR</button><button class="btn g" id="byeClose">❌ FECHAR O JOGO</button></div>
   <div class="sub" id="byeMsg" style="color:#ffd23f"></div>
 </div>
@@ -339,7 +340,8 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
 <div class="screen" id="who">
   <h2>QUEM VAI JOGAR?</h2>
   <div class="swatches" id="whoList" style="max-width:640px"></div>
-  <div class="row"><button class="btn y" id="whoNew">➕ NOVO PILOTO</button><button class="btn g" id="whoBack">VOLTAR</button></div>
+  <div class="sub" id="whoMsg" style="color:#ffd23f"></div>
+  <div class="row"><button class="btn y" id="whoNew">➕ NOVO PILOTO</button><button class="btn b s" id="whoDel">🗑️ REMOVER DESTE APARELHO</button><button class="btn g" id="whoBack">VOLTAR</button></div>
 </div>
 
 <!-- Senha -->
@@ -360,6 +362,28 @@ h1 .v2{font-size:.55em;color:#fff;background:linear-gradient(135deg,#ff2d75,#ff9
   <div class="sub">Essa senha guarda o seu histórico: garagem, moedas e vitórias.</div>
   <div class="sub" id="npMsg" style="color:#ffd23f"></div>
   <div class="row"><button class="btn g" id="npLater">DEPOIS</button><button class="btn" id="npOk">SALVAR</button></div>
+</div>
+
+<!-- Pais -->
+<div class="screen" id="parentsScr">
+  <h2>👨‍👩‍👦 CONTA DOS PAIS</h2>
+  <div class="sub">Código para os pais acompanharem este piloto:</div>
+  <div class="coins" id="parCode" style="font-size:2.2em;letter-spacing:.15em">—</div>
+  <div class="sub" id="parInfo" style="max-width:520px"></div>
+  <div class="sub">Painel dos Pais: <a id="parLink" target="_blank" rel="noopener" style="color:#7fdcff"></a></div>
+  <div class="sub" style="max-width:520px">Os pais veem as corridas, as salas online, com quem você jogou, os emojis e quando o microfone foi ligado. A voz não é gravada.</div>
+  <div class="row"><button class="btn g" id="parBack">VOLTAR</button></div>
+</div>
+
+<!-- Instalar o app -->
+<div class="screen" id="installScr">
+  <h2>📲 INSTALAR O LORENZO KART</h2>
+  <div class="sub" style="max-width:560px;text-align:left;line-height:1.6">
+    <b>iPhone / iPad:</b> abra este link no <b>Safari</b>, toque em <b>Compartilhar ⬆</b> e depois em <b>"Adicionar à Tela de Início"</b>.<br>
+    <b>Android:</b> no <b>Chrome</b>, toque no menu <b>⋮</b> e depois em <b>"Instalar app"</b> ou <b>"Adicionar à tela inicial"</b>.<br>
+    O ícone do Lorenzo Kart aparece junto dos seus apps e abre em tela cheia.
+  </div>
+  <div class="row"><button class="btn g" id="instBack">VOLTAR</button></div>
 </div>
 
 <!-- Recordes -->
@@ -451,7 +475,11 @@ if (!users.list.length && save.name) { users.list.push({ name: save.name, pass: 
 const findUser = n => users.list.find(u => u.name.toLowerCase() === String(n || '').toLowerCase());
 function loadUser(n) { const d = readJSON(userKey(n)); save = Object.assign(freshSave(), d || {}, { name: findUser(n).name }); users.cur = save.name; writeJSON(USERS_KEY, users); }
 if (users.cur && findUser(users.cur)) loadUser(users.cur);
-const persist = () => writeJSON(save.name && findUser(save.name) ? userKey(save.name) : SAVE_KEY, save);
+let progT = 0;
+const persist = () => {
+  writeJSON(save.name && findUser(save.name) ? userKey(save.name) : SAVE_KEY, save);
+  if (save.name && findUser(save.name)) { clearTimeout(progT); progT = setTimeout(pushProgress, 8000); }
+};
 
 // ============ TELA CHEIA ============
 const root = document.documentElement;
@@ -2530,52 +2558,138 @@ $('nameOk').onclick = async () => {
   if (!NAME_RE.test(n)) { $('nameMsg').textContent = 'Use de 3 a 16 letras, números ou _ (sem espaço).'; return; }
   if (!sb) { $('nameMsg').textContent = 'Sem conexão com o servidor. Tente de novo.'; return; }
   $('nameMsg').textContent = 'Registrando...';
-  if (findUser(n)) { askPass(findUser(n).name); return; }
+  if (findUser(n)) { enterUser(findUser(n).name); return; }
   const token = save.name ? newToken() : save.token; // piloto novo = ID novo no servidor
   const { data, error } = await sb.rpc('register_player', { p_name: n, p_token: token });
   if (error || !data) { $('nameMsg').textContent = 'Sem conexão. Confira a internet e tente de novo.'; return; }
-  if (!data.ok) { $('nameMsg').textContent = data.error === 'taken' ? 'Esse nome já tem dono. Escolha outro!' : 'Nome inválido.'; return; }
+  if (!data.ok) {
+    if (data.error === 'taken' && data.has_pass) { askPass(data.name || n, true); return; }
+    $('nameMsg').textContent = data.error === 'taken' ? 'Esse piloto foi criado em outro celular e ainda não tem senha no servidor. Entre nele uma vez no celular onde foi criado. Ou escolha outro nome.' : 'Nome inválido.'; return;
+  }
   const keep = { music: save.music, sfx: save.sfx, gfx: save.gfx, seenV2: save.seenV2 };
   const fresh = save.name ? Object.assign(freshSave(), keep) : save; // o primeiro piloto do aparelho fica com o progresso que já existia
   users.list.push({ name: data.name, pass: DEF_PASS }); users.cur = data.name; writeJSON(USERS_KEY, users);
-  save = Object.assign(fresh, { name: data.name, token }); persist(); afterLogin(); Snd.click(); goNewPass();
+  save = Object.assign(fresh, { name: data.name, token }); persist(); afterLogin(); Snd.click(); goNewPass(true);
 };
 $('changeName').onclick = goWho;
 $('nameBack').onclick = () => users.list.length ? goWho() : goMenu();
 
 // ---- Pilotos deste aparelho e senhas ----
 function newToken() { const a = new Uint8Array(16); crypto.getRandomValues(a); return [...a].map(b => b.toString(16).padStart(2, '0')).join(''); }
-function afterLogin() { showMeName(); refreshSettings(); Snd.init(); Snd.music(save.music); if (save.gfx != null && QUAL[save.gfx] && QUAL[save.gfx] !== Q) setQuality(save.gfx); document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins); if ($('wins')) $('wins').textContent = save.wins; }
+function afterLogin() { serverCheck(); showMeName(); refreshSettings(); Snd.init(); Snd.music(save.music); if (save.gfx != null && QUAL[save.gfx] && QUAL[save.gfx] !== Q) setQuality(save.gfx); document.querySelectorAll('.cn').forEach(e => e.textContent = save.coins); if ($('wins')) $('wins').textContent = save.wins; }
+let whoDel = false, whoDelPick = null;
+function enterUser(n) {
+  const u = findUser(n); if (!u) return;
+  // senha já salva neste aparelho: entra direto
+  if (u.pass && u.pass !== DEF_PASS) { persist(); loadUser(u.name); afterLogin(); Snd.click(); goStart(); }
+  else askPass(u.name);
+}
+$('whoDel').onclick = () => { whoDel = !whoDel; whoDelPick = null; $('whoDel').textContent = whoDel ? '✖ CANCELAR' : '🗑️ REMOVER DESTE APARELHO'; $('whoMsg').textContent = whoDel ? 'Toque no piloto que vai sair deste aparelho. O progresso continua salvo no servidor.' : ''; };
+function removeUser(n) {
+  users.list = users.list.filter(u => u.name !== n);
+  try { localStorage.removeItem(userKey(n)); } catch (e) {}
+  if (users.cur === n) { users.cur = null; save = freshSave(); }
+  writeJSON(USERS_KEY, users); showMeName();
+}
 function goWho() {
+  whoDel = false; whoDelPick = null; $('whoDel').textContent = '🗑️ REMOVER DESTE APARELHO'; $('whoMsg').textContent = '';
+  $('whoDel').style.display = users.list.length ? '' : 'none';
   $('whoList').innerHTML = users.list.map(u => `<button class="pl ${save.name === u.name ? 'sel' : ''}" data-u="${esc(u.name)}" style="min-width:110px"><span>👤</span>${esc(u.name)}</button>`).join('') || '<div class="sub">Nenhum piloto ainda.</div>';
-  $('whoList').querySelectorAll('.pl').forEach(b => b.onclick = () => { Snd.click(); askPass(b.dataset.u); });
+  $('whoList').querySelectorAll('.pl').forEach(b => b.onclick = () => {
+    Snd.click();
+    if (!whoDel) return enterUser(b.dataset.u);
+    if (whoDelPick !== b.dataset.u) { whoDelPick = b.dataset.u; $('whoMsg').textContent = 'Toque de novo em ' + b.dataset.u + ' para remover deste aparelho.'; return; }
+    removeUser(b.dataset.u); goWho();
+  });
   $('whoBack').style.display = save.name ? '' : 'none';
   showScreen('who');
 }
-let passFor = null;
-function askPass(n) {
-  passFor = findUser(n).name;
+let passFor = null, passRemote = false;
+function askPass(n, remote) {
+  passRemote = !!remote;
+  passFor = remote ? n : findUser(n).name;
   $('passTitle').textContent = 'SENHA DE ' + passFor.toUpperCase();
-  $('passHint').textContent = findUser(passFor).pass === DEF_PASS ? 'Primeira vez? A senha padrão é 1 2 3 4' : '';
+  $('passHint').textContent = remote ? 'Esse piloto já existe. Digite a senha dele para entrar neste aparelho.' : (findUser(passFor).pass === DEF_PASS ? 'Primeira vez? A senha padrão é 1 2 3 4' : '');
   $('passIn').value = ''; $('passMsg').textContent = ''; showScreen('passScr'); setTimeout(() => $('passIn').focus(), 50);
 }
-$('passOk').onclick = () => {
+$('passOk').onclick = async () => {
+  if (passRemote) return remoteLogin(passFor, $('passIn').value);
   const u = findUser(passFor);
   if (!u || $('passIn').value !== u.pass) { $('passMsg').textContent = 'Senha errada. Tente de novo!'; return; }
   persist(); loadUser(u.name); afterLogin(); Snd.click();
-  if (u.pass === DEF_PASS) goNewPass(); else goStart();
+  if (u.pass === DEF_PASS) goNewPass(true); else goStart();
 };
-$('passBack').onclick = goWho;
-function goNewPass() { $('npWho').textContent = 'Piloto: ' + save.name; $('np1').value = $('np2').value = ''; $('npMsg').textContent = ''; showScreen('newPass'); }
-$('npOk').onclick = () => {
+$('passBack').onclick = () => passRemote ? goName() : goWho();
+async function remoteLogin(n, pass) {
+  if (!sb) { $('passMsg').textContent = 'Sem conexão com o servidor.'; return; }
+  $('passMsg').textContent = 'Entrando...';
+  const token = newToken();
+  let d = null; try { d = (await sb.rpc('login_player', { p_name: n, p_pass: pass, p_token: token })).data; } catch (e) {}
+  if (!d) { $('passMsg').textContent = 'Sem conexão. Confira a internet e tente de novo.'; return; }
+  if (!d.ok) { $('passMsg').textContent = d.error === 'locked' ? 'Muitas tentativas erradas. Espere 10 minutos.' : d.error === 'nopass' ? 'Esse piloto ainda não tem senha no servidor.' : 'Senha errada. Tente de novo!'; return; }
+  if (save.name && findUser(save.name)) persist();
+  const keep = { music: save.music, sfx: save.sfx, gfx: save.gfx, seenV2: save.seenV2, carVol: save.carVol, musVol: save.musVol };
+  users.list = users.list.filter(u => u.name.toLowerCase() !== d.name.toLowerCase());
+  users.list.push({ name: d.name, pass }); users.cur = d.name; writeJSON(USERS_KEY, users);
+  save = Object.assign(freshSave(), d.progress || {}, keep, { name: d.name, token });
+  writeJSON(userKey(d.name), save); passRemote = false;
+  afterLogin(); Snd.click(); toast('Bem-vindo de volta, ' + d.name + '! 🏁', 2); goStart();
+}
+function goNewPass(force) { $('npWho').textContent = 'Piloto: ' + save.name; $('np1').value = $('np2').value = ''; $('npMsg').textContent = ''; $('npLater').textContent = force ? '' : 'VOLTAR'; $('npLater').style.display = force ? 'none' : ''; showScreen('newPass'); }
+$('npOk').onclick = async () => {
   const a = $('np1').value, b = $('np2').value;
   if (a.length < 4) { $('npMsg').textContent = 'A senha precisa ter pelo menos 4 letras ou números.'; return; }
   if (a !== b) { $('npMsg').textContent = 'As duas senhas não são iguais.'; return; }
+  $('npMsg').textContent = 'Salvando...';
+  let d = null; try { d = sb ? (await sb.rpc('set_password', { p_name: save.name, p_token: save.token, p_pass: a })).data : null; } catch (e) {}
+  if (!d || !d.ok) { $('npMsg').textContent = 'Não consegui salvar a senha no servidor. Confira a internet e tente de novo.'; return; }
   findUser(save.name).pass = a; writeJSON(USERS_KEY, users); Snd.click(); toast('Senha salva! 🔑', 1.5); goStart();
 };
 $('npLater').onclick = goStart;
 $('passBtn').onclick = () => { if (save.name && findUser(save.name)) goNewPass(); };
 $('whoNew').onclick = () => { Snd.click(); goName(); $('nameMsg').textContent = 'Crie o nome do novo piloto. Ele começa com a garagem zerada.'; };
+// ---- Servidor: senha, progresso e controle dos pais ----
+let voiceAllowed = true;
+function rpcMe(fn, args) {
+  if (!sb || !save.name || !save.token) return Promise.resolve(null);
+  return sb.rpc(fn, Object.assign({ p_name: save.name, p_token: save.token }, args || {})).then(r => r.data).catch(() => null);
+}
+async function serverCheck() {
+  const d = await rpcMe('player_status'); if (!d || !d.ok) return;
+  voiceAllowed = d.voice !== false;
+  const u = findUser(save.name);
+  // pilotos antigos: a senha que estava só no aparelho vai para o servidor
+  if (!d.has_pass && u && u.pass && u.pass !== DEF_PASS) rpcMe('set_password', { p_pass: u.pass });
+}
+function pushProgress() {
+  if (!save.name) return;
+  const p = Object.assign({}, save); delete p.token; delete p.name;
+  rpcMe('save_progress', { p_progress: p });
+}
+addEventListener('pagehide', () => { if (progT) { clearTimeout(progT); progT = 0; pushProgress(); } });
+$('parentsBtn').onclick = async () => {
+  Snd.click();
+  if (!save.name) return goName();
+  $('parLink').href = $('parLink').textContent = new URL('pais/', location.href).href;
+  $('parCode').textContent = '...'; $('parInfo').textContent = ''; showScreen('parentsScr');
+  const d = await rpcMe('get_link_code');
+  if (!d || !d.ok) { $('parCode').textContent = '—'; $('parInfo').textContent = 'Sem conexão com o servidor. Tente de novo.'; return; }
+  if (d.parent) { $('parCode').textContent = '✅'; $('parInfo').innerHTML = 'A conta dos pais já existe: <b>' + esc(d.parent) + '</b>. Eles acompanham pelo Painel dos Pais.'; }
+  else { $('parCode').textContent = d.code.slice(0, 3) + ' ' + d.code.slice(3); $('parInfo').innerHTML = 'Peça para o seu pai ou a sua mãe abrir o Painel dos Pais, digitar o nome <b>' + esc(save.name) + '</b> e este código. O código vale 30 minutos.'; }
+};
+$('parBack').onclick = goMenu;
+const STANDALONE = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+let deferredInstall = null;
+if (!STANDALONE) $('installBtn').style.display = '';
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+addEventListener('appinstalled', () => { $('installBtn').style.display = 'none'; });
+$('installBtn').onclick = async () => {
+  Snd.click();
+  if (deferredInstall) { deferredInstall.prompt(); try { const r = await deferredInstall.userChoice; if (r.outcome === 'accepted') $('installBtn').style.display = 'none'; } catch (e) {} deferredInstall = null; }
+  else showScreen('installScr');
+};
+$('instBack').onclick = goMenu;
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 function goStart() { if (!save.seenV2) showScreen('news'); else goMenu(); }
 
 async function submitResult(track, ms, place) {
@@ -2633,10 +2747,10 @@ function openRoom(code, creating) {
     ch.subscribe(async st => {
       if (st === 'SUBSCRIBED' && !done) {
         done = true; await trackMe();
-        if (creating) return res(true);
+        if (creating) { netLogJoin(); return res(true); }
         setTimeout(() => {
           if (net.order.indexOf(myId()) >= (net.size || MAX_ROOM)) { leaveRoom(true); $('onMsg').textContent = 'Essa sala está cheia (' + (net.size || MAX_ROOM) + ' pilotos).'; showScreen('online'); res(false); }
-          else if ([...net.players.keys()].some(k => k !== myId())) res(true);
+          else if ([...net.players.keys()].some(k => k !== myId())) { netLogJoin(); res(true); }
           else { leaveRoom(true); $('onMsg').textContent = 'Sala não encontrada. Confira o código.'; showScreen('online'); res(false); }
         }, 2500);
       } else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') && !done) { done = true; $('onMsg').textContent = 'Não consegui conectar. Tente de novo.'; res(false); }
@@ -2645,8 +2759,15 @@ function openRoom(code, creating) {
 }
 function trackMe() { return net.ch ? net.ch.track({ name: save.name, joinedAt: net.joinedAt, color: save.color, pilot: save.pilot, voice: net.voice, size: net.size }) : null; }
 
+async function netLogJoin() {
+  net.sid = null; net.seen = new Set([...net.players.values()].map(p => p.name).filter(n => n && n !== save.name));
+  const code = net.code, d = await rpcMe('log_join', { p_room: code, p_peers: [...net.seen] });
+  if (d && d.ok && net.code === code && net.on) { net.sid = d.id; voiceAllowed = d.voice !== false; if (!voiceAllowed && net.voice) voiceOff(); renderVoice(); }
+}
+function logRoom(kind, data) { if (net.on && net.code) rpcMe('log_event', { p_room: net.code, p_kind: kind, p_data: data || null }); }
 function leaveRoom(silent) {
   voiceOff(true);
+  if (net.sid) { rpcMe('log_leave', { p_sid: net.sid, p_peers: [...(net.seen || [])] }); net.sid = null; }
   if (net.ch) { try { net.ch.untrack(); sb.removeChannel(net.ch); } catch (e) {} }
   net.ch = null; net.on = false;
   if (!silent) { Snd.engineStop(); state = 'menu'; buildTrack(curTrack); goMenu(); }
@@ -2660,6 +2781,7 @@ function onPresence() {
   const st = net.ch.presenceState(), prev = net.players, m = new Map();
   for (const k in st) { const meta = st[k][0]; if (meta) m.set(k, { id: k, name: meta.name, joinedAt: meta.joinedAt, color: meta.color, pilot: meta.pilot, voice: !!meta.voice, size: meta.size }); }
   net.players = m;
+  if (net.seen) m.forEach(p => { if (p.name && p.name !== save.name) net.seen.add(p.name); });
   net.order = [...m.values()].sort((a, b) => a.joinedAt - b.joinedAt || (a.id < b.id ? -1 : 1)).map(p => p.id);
   net.host = net.order[0];
   if (!isHost()) { const hp = m.get(net.host); if (hp && hp.size) net.size = hp.size; }
@@ -2918,14 +3040,16 @@ function netLoop(dt) {
 // ============ ÁUDIO DE VOZ NA SALA (WebRTC) ============
 const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
 async function voiceOn() {
+  if (!voiceAllowed) { $('roomStatus').textContent = '🔒 O áudio de voz foi desligado pelos seus pais.'; renderVoice(); return; }
   if (!navigator.mediaDevices || !window.RTCPeerConnection) { $('roomStatus').textContent = 'Este navegador não permite áudio.'; return; }
   try {
     net.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
   } catch (e) { $('roomStatus').textContent = '🎙️ Microfone não liberado. Permita o microfone no navegador.'; return; }
-  net.voice = true; net.micOn = true; await trackMe(); voiceReconcile(); renderVoice();
+  net.voice = true; net.micOn = true; logRoom('mic_on'); await trackMe(); voiceReconcile(); renderVoice();
 }
 function voiceOff(skipTrack) {
   if (!net.voice && !net.stream) return;
+  if (net.voice) logRoom('mic_off');
   net.voice = false;
   if (net.stream) { net.stream.getTracks().forEach(t => t.stop()); net.stream = null; }
   [...net.peers.keys()].forEach(closePeer);
@@ -2980,10 +3104,10 @@ function closePeer(id) {
   const P = net.peers.get(id); if (P) { try { P.pc.close(); } catch (e) {} net.peers.delete(id); }
   const a = document.getElementById('aud-' + id); if (a) a.remove();
 }
-function toggleMic() { net.micOn = !net.micOn; if (net.stream) net.stream.getAudioTracks().forEach(t => t.enabled = net.micOn); renderVoice(); }
+function toggleMic() { net.micOn = !net.micOn; logRoom(net.micOn ? 'mic_on' : 'mic_off', { mudo: !net.micOn }); if (net.stream) net.stream.getAudioTracks().forEach(t => t.enabled = net.micOn); renderVoice(); }
 function sendEmo(e) {
   if (!net.on) return;
-  send({ t: 'emo', id: myId(), e }); gotEmo(myId(), e); Snd.click();
+  send({ t: 'emo', id: myId(), e }); gotEmo(myId(), e); Snd.click(); logRoom('emoji', { e });
   $('emoBar').classList.remove('on');
 }
 function gotEmo(id, e) {
@@ -3001,7 +3125,7 @@ $('emoBar').innerHTML = EMOS.map(e => `<button data-e="${e}">${e}</button>`).joi
 document.querySelectorAll('#emoRow button, #emoBar button').forEach(b => b.onclick = () => sendEmo(b.dataset.e));
 $('hudEmo').onclick = () => $('emoBar').classList.toggle('on');
 function renderVoice() {
-  $('voiceBtn').textContent = net.voice ? '🔇 Desligar áudio da sala' : '🎙️ Ligar áudio da sala';
+  $('voiceBtn').textContent = !voiceAllowed ? '🔒 Áudio desligado pelos pais' : net.voice ? '🔇 Desligar áudio da sala' : '🎙️ Ligar áudio da sala';
   $('micBtn').style.display = net.voice ? '' : 'none';
   $('micBtn').textContent = net.micOn ? '🎙️ Microfone ligado' : '🤐 Microfone mutado';
   $('hudMic').style.display = net.on && net.voice ? '' : 'none';
@@ -3013,7 +3137,7 @@ $('micBtn').onclick = toggleMic;
 $('hudMic').onclick = toggleMic;
 
 // ============ ATUALIZAÇÃO AUTOMÁTICA ============
-const GAME_VERSION = 16; // aumentar junto com version.json a cada atualização publicada
+const GAME_VERSION = 17; // aumentar junto com version.json a cada atualização publicada
 let newVersion = 0;
 async function checkUpdate() {
   try {
@@ -3037,6 +3161,7 @@ if (/[?&]v=/.test(location.search)) history.replaceState(null, '', location.path
 
 buildTrack(0);
 showMeName();
+if (save.name) serverCheck();
 if (users.list.length > 1) goWho();          // mais de um piloto no aparelho: escolhe e digita a senha
 else if (!save.name) goName();
 else goStart();

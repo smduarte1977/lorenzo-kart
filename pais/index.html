@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pais Kart">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Lorenzo Kart · Painel dos Pais</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background:radial-gradient(circle at 50% -10%,#2a1f6b,#0b0b1e 60%);color:#fff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 60px}
+h1,h2,.brand{font-family:'Lilita One',system-ui,sans-serif;letter-spacing:.02em}
+h1{font-size:30px;text-align:center;margin:10px 0 4px}
+h1 span{color:#ffd23f}
+.tag{text-align:center;color:#b9b6e6;font-size:14px;margin-bottom:20px}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:13px;color:#b9b6e6;margin:10px 0 4px}
+input{width:100%;font-size:17px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#151236;color:#fff;outline:none}
+input:focus{border-color:#ffd23f}
+button{font-family:'Lilita One',system-ui,sans-serif;font-size:17px;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;color:#1a1033;background:#ffd23f}
+button.full{width:100%;margin-top:14px}
+button.ghost{background:transparent;color:#b9b6e6;border:1px solid rgba(255,255,255,.2)}
+button.small{font-size:14px;padding:8px 12px}
+.msg{color:#ffd23f;font-size:14px;margin-top:10px;min-height:18px}
+.link{color:#7fdcff;background:none;border:0;font-family:inherit;font-size:14px;padding:0;text-decoration:underline;cursor:pointer}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+.stats b{display:block;font-family:'Lilita One',sans-serif;font-size:26px;color:#ffd23f}
+.stats span{font-size:12px;color:#b9b6e6}
+.tabs{display:flex;gap:6px;margin:4px 0 12px}
+.tabs button{flex:1;font-size:14px;padding:10px 6px;background:rgba(255,255,255,.08);color:#fff}
+.tabs button.on{background:#ffd23f;color:#1a1033}
+.item{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:15px}
+.item:last-child{border-bottom:0}
+.item small{color:#b9b6e6;display:block;margin-top:3px;font-size:13px}
+.item.click{cursor:pointer}
+.pill{display:inline-block;font-size:12px;background:rgba(255,255,255,.1);border-radius:99px;padding:2px 8px;margin:2px 4px 0 0}
+.switch{position:relative;width:56px;height:32px;border-radius:99px;background:#555;border:0;padding:0;flex:none;transition:.2s}
+.switch::after{content:'';position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on{background:#33c46b}.switch.on::after{left:28px}
+.ev{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px}
+.ev time{color:#b9b6e6;font-size:12px;min-width:44px;padding-top:2px}
+.ev.mine{background:rgba(255,210,63,.07);border-radius:8px;padding-left:6px}
+.empty{color:#b9b6e6;font-size:14px;text-align:center;padding:14px 0}
+.hide{display:none!important}
+.note{font-size:12px;color:#8f8bc4;text-align:center;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LORENZO KART <span>PAIS</span></h1>
+  <div class="tag">Acompanhe quem joga com o seu filho, as corridas e o que é enviado nas salas online.</div>
+
+  <!-- Entrar -->
+  <div id="vLogin" class="card">
+    <h2>Entrar</h2>
+    <label for="lName">Conta dos pais</label>
+    <input id="lName" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ex.: Lorenzo10_pais">
+    <label for="lPass">Senha dos pais</label>
+    <input id="lPass" type="password" autocomplete="off" placeholder="sua senha">
+    <button class="full" id="lGo">ENTRAR</button>
+    <div class="msg" id="lMsg"></div>
+    <div style="margin-top:8px">Primeira vez? <button class="link" id="toCreate">Criar a conta dos pais</button></div>
+  </div>
+
+  <!-- Criar -->
+  <div id="vCreate" class="card hide">
+    <h2>Criar a conta dos pais</h2>
+    <div style="font-size:14px;color:#b9b6e6;margin-top:6px;line-height:1.5">No jogo, no celular do seu filho, toque em <b>👨‍👩‍👦 PAIS</b>. Vai aparecer um código de 6 números, que vale 30 minutos.</div>
+    <label for="cChild">Nome do piloto (o nome do seu filho no jogo)</label>
+    <input id="cChild" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ex.: Lorenzo10">
+    <label for="cCode">Código que aparece no jogo</label>
+    <input id="cCode" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="000 000">
+    <label for="cP1">Crie a senha dos pais (mínimo 6)</label>
+    <input id="cP1" type="password" autocomplete="new-password" placeholder="senha dos pais">
+    <label for="cP2">Repita a senha</label>
+    <input id="cP2" type="password" autocomplete="new-password" placeholder="repita a senha">
+    <button class="full" id="cGo">CRIAR CONTA</button>
+    <div class="msg" id="cMsg"></div>
+    <div style="margin-top:8px"><button class="link" id="toLogin">Já tenho conta: entrar</button></div>
+  </div>
+
+  <!-- Painel -->
+  <div id="vPanel" class="hide">
+    <div class="card">
+      <div class="row">
+        <div><div class="brand" style="font-size:22px">👦 <span id="pChild"></span></div><small style="color:#b9b6e6" id="pSince"></small></div>
+        <button class="ghost small" id="pOut">Sair</button>
+      </div>
+      <div class="stats" style="margin-top:14px">
+        <div><b id="pRaces">0</b><span>corridas</span></div>
+        <div><b id="pWins">0</b><span>vitórias</span></div>
+        <div><b id="pRooms">0</b><span>salas online</span></div>
+      </div>
+    </div>
+    <div class="card row">
+      <div><b>🎙️ Áudio de voz nas salas</b><small style="display:block;color:#b9b6e6;font-size:13px;margin-top:3px" id="pVoiceTxt"></small></div>
+      <button class="switch" id="pVoice" aria-label="Liberar áudio de voz"></button>
+    </div>
+    <div class="tabs">
+      <button class="on" data-t="rooms">🌐 Salas</button>
+      <button data-t="races">🏁 Corridas</button>
+      <button data-t="recs">🏆 Recordes</button>
+    </div>
+    <div class="card" id="tRooms"></div>
+    <div class="card hide" id="tRaces"></div>
+    <div class="card hide" id="tRecs"></div>
+    <div class="card hide" id="tRoom">
+      <div class="row"><b id="rTitle"></b><button class="ghost small" id="rBack">← Voltar</button></div>
+      <div id="rPeople" style="margin:8px 0"></div>
+      <div id="rEvents"></div>
+    </div>
+    <div class="note">A voz não é gravada. O histórico fica guardado por 90 dias.<br>Por segurança, a senha dos pais é pedida toda vez que o painel é aberto.</div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://gdehjvqwrsksthdedahu.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkZWhqdnF3cnNrc3RoZGVkYWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2MTcwMDAsImV4cCI6MjExMDE5MzAwMH0.DkUmbVi1LRzIA71TZfuT0xXK7zuWMtHBuxduCBR9f4s';
+const TRACKS = [['Vale Verde','🌳'],['Deserto Dourado','🌵'],['Pico Nevado','❄️'],['Vulcão Furioso','🌋'],['Galáxia Neon','🌌'],['Praia Tropical','🏝️'],['Cidade Noturna','🌃'],['Terra dos Doces','🍭'],['Floresta de Outono','🍂'],['Selva Amazônica','🦜'],['Cratera Lunar','🌙'],['Reino dos Cogumelos','🍄'],['Caverna de Cristal','💎'],['Jardim das Cerejeiras','🌸'],['Arco-Íris Final','🌈']];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let session = null, data = null, timer = 0, openRoomId = null;   // a sessão fica só na memória: fechou, pede a senha de novo
+
+async function rpc(fn, args) {
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+function show(v) { ['vLogin', 'vCreate', 'vPanel'].forEach(x => $(x).classList.toggle('hide', x !== v)); }
+const trackName = t => { const big = t >= 100, x = TRACKS[big ? t - 100 : t] || ['Pista ' + t, '🏁']; return x[1] + ' ' + x[0] + (big ? ' (longa)' : ''); };
+const fmtMs = ms => { const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, c = Math.floor(ms / 10) % 100; return m + ':' + String(s).padStart(2, '0') + '.' + String(c).padStart(2, '0'); };
+const fmtDate = d => new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const fmtTime = d => new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const dur = (a, b) => { if (!b) return 'ainda na sala ou saiu sem fechar'; const m = Math.max(1, Math.round((new Date(b) - new Date(a)) / 60000)); return m + ' min'; };
+
+$('toCreate').onclick = () => { show('vCreate'); $('cMsg').textContent = ''; };
+$('toLogin').onclick = () => { show('vLogin'); $('lMsg').textContent = ''; };
+
+$('lGo').onclick = async () => {
+  const n = $('lName').value.trim(), p = $('lPass').value;
+  if (!n || !p) { $('lMsg').textContent = 'Preencha a conta e a senha.'; return; }
+  $('lMsg').textContent = 'Entrando...';
+  const d = await rpc('parent_login', { p_name: n, p_pass: p });
+  $('lPass').value = '';
+  if (!d) { $('lMsg').textContent = 'Sem conexão. Tente de novo.'; return; }
+  if (!d.ok) { $('lMsg').textContent = d.error === 'locked' ? 'Muitas tentativas erradas. Espere 10 minutos.' : 'Conta ou senha errada.'; return; }
+  session = d.session; $('lMsg').textContent = ''; show('vPanel'); await load(); timer = setInterval(load, 30000);
+};
+$('lPass').addEventListener('keydown', e => { if (e.key === 'Enter') $('lGo').click(); });
+
+$('cGo').onclick = async () => {
+  const c = $('cChild').value.trim(), code = $('cCode').value.replace(/\D/g, ''), a = $('cP1').value, b = $('cP2').value;
+  if (!c || code.length !== 6) { $('cMsg').textContent = 'Digite o nome do piloto e o código de 6 números.'; return; }
+  if (a.length < 6) { $('cMsg').textContent = 'A senha dos pais precisa ter pelo menos 6 caracteres.'; return; }
+  if (a !== b) { $('cMsg').textContent = 'As duas senhas não são iguais.'; return; }
+  $('cMsg').textContent = 'Criando...';
+  const d = await rpc('parent_create', { p_child: c, p_code: code, p_pass: a });
+  if (!d) { $('cMsg').textContent = 'Sem conexão. Tente de novo.'; return; }
+  if (!d.ok) {
+    $('cMsg').textContent = { notfound: 'Esse piloto não existe. Confira o nome no jogo.', exists: 'Esse piloto já tem conta dos pais. Use Entrar.', code: 'Código errado ou vencido. Gere outro no jogo (botão PAIS).', locked: 'Muitas tentativas. Espere 10 minutos.', weak: 'Senha muito curta.' }[d.error] || 'Não deu certo. Tente de novo.';
+    return;
+  }
+  $('cP1').value = $('cP2').value = '';
+  show('vLogin'); $('lName').value = d.name; $('lPass').value = '';
+  $('lMsg').textContent = '✅ Conta criada: ' + d.name + '. Guarde esse nome e entre com a sua senha.';
+};
+
+$('pOut').onclick = () => { if (session) rpc('parent_logout', { p_session: session }); session = null; data = null; clearInterval(timer); show('vLogin'); };
+
+async function load() {
+  if (!session) return;
+  const d = await rpc('parent_overview', { p_session: session });
+  if (!d) return;
+  if (!d.ok) { session = null; clearInterval(timer); show('vLogin'); $('lMsg').textContent = 'A sessão acabou. Entre de novo.'; return; }
+  data = d; render();
+  if (openRoomId) openRoom(openRoomId, true);
+}
+
+function render() {
+  const d = data;
+  $('pChild').textContent = d.child;
+  $('pSince').textContent = 'jogando desde ' + new Date(d.since).toLocaleDateString('pt-BR');
+  $('pRaces').textContent = d.races; $('pWins').textContent = d.wins; $('pRooms').textContent = d.rooms.length;
+  $('pVoice').classList.toggle('on', !!d.voice);
+  $('pVoiceTxt').textContent = d.voice ? 'Liberado: ele pode falar e ouvir os amigos na sala.' : 'Bloqueado: o microfone do jogo fica desligado.';
+  $('tRooms').innerHTML = d.rooms.length ? d.rooms.map(r => `<div class="item click" data-id="${r.id}">🌐 Sala ${esc(r.room)} · ${fmtDate(r.joined_at)}
+      <small>${r.peers.length ? 'Com: ' + r.peers.map(p => `<span class="pill">${esc(p)}</span>`).join('') : 'Ninguém mais entrou'}</small>
+      <small>⏱️ ${dur(r.joined_at, r.left_at)} · 💬 ${r.emojis} emoji${r.emojis == 1 ? '' : 's'} na sala · toque para ver tudo</small></div>`).join('')
+    : '<div class="empty">Nenhuma sala online ainda.</div>';
+  $('tRooms').querySelectorAll('.item').forEach(el => el.onclick = () => openRoom(+el.dataset.id));
+  $('tRaces').innerHTML = d.races_list.length ? d.races_list.map(r => `<div class="item">${r.data.place === 1 ? '🥇' : r.data.place === 2 ? '🥈' : r.data.place === 3 ? '🥉' : '🏁'} ${r.data.place}º lugar · ${esc(trackName(r.data.track))}
+      <small>${fmtDate(r.at)} · melhor volta ${fmtMs(r.data.ms)}</small></div>`).join('')
+    : '<div class="empty">As corridas aparecem aqui a partir de agora.</div>';
+  $('tRecs').innerHTML = d.records.length ? d.records.map(r => `<div class="item">${esc(trackName(r.track))}<small>recorde de volta: ${fmtMs(r.ms)}</small></div>`).join('')
+    : '<div class="empty">Sem recordes ainda.</div>';
+}
+
+$('pVoice').onclick = async () => {
+  if (!data) return;
+  const want = !data.voice;
+  const d = await rpc('parent_set_voice', { p_session: session, p_on: want });
+  if (d && d.ok) { data.voice = d.voice; render(); }
+};
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  openRoomId = null; $('tRoom').classList.add('hide');
+  $('tRooms').classList.toggle('hide', b.dataset.t !== 'rooms');
+  $('tRaces').classList.toggle('hide', b.dataset.t !== 'races');
+  $('tRecs').classList.toggle('hide', b.dataset.t !== 'recs');
+});
+
+const KIND = { join: '👋 entrou na sala', leave: '🚪 saiu da sala', mic_on: '🎙️ ligou o microfone', mic_off: '🔇 desligou / mutou o microfone' };
+async function openRoom(id, quiet) {
+  openRoomId = id;
+  const r = data.rooms.find(x => x.id === id);
+  if (!quiet) { $('rTitle').textContent = 'Sala ' + (r ? r.room : ''); $('rEvents').innerHTML = '<div class="empty">Carregando...</div>'; }
+  $('tRooms').classList.add('hide'); $('tRoom').classList.remove('hide');
+  $('rPeople').innerHTML = r && r.peers.length ? 'Jogaram juntos: ' + r.peers.map(p => `<span class="pill">${esc(p)}</span>`).join('') : '';
+  const d = await rpc('parent_room_events', { p_session: session, p_sid: id });
+  if (!d || !d.ok) { $('rEvents').innerHTML = '<div class="empty">Não consegui carregar.</div>'; return; }
+  $('rEvents').innerHTML = d.events.length ? d.events.map(e => `<div class="ev ${e.mine ? 'mine' : ''}"><time>${fmtTime(e.at)}</time><div><b>${esc(e.who)}</b> ${e.kind === 'emoji' ? 'enviou ' + esc(e.data && e.data.e) : esc(KIND[e.kind] || e.kind)}</div></div>`).join('')
+    : '<div class="empty">Nada registrado nessa sala.</div>';
+}
+$('rBack').onclick = () => { openRoomId = null; $('tRoom').classList.add('hide'); $('tRooms').classList.remove('hide'); };
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
